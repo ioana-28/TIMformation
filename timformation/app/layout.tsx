@@ -1,6 +1,6 @@
-// timformation/app/layout.tsx
 
-import './globals.css'; // Make sure this is imported
+
+import './globals.css'; 
 
 export default function RootLayout({
   children,
@@ -9,7 +9,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      {/* Apply full height and minimal margin/padding to body */}
+    
       <body style={{ margin: 0, padding: 0, height: '100vh', overflow: 'hidden' }}>
         {children}
       </body>

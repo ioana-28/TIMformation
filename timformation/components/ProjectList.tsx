@@ -13,8 +13,7 @@ interface ProjectListProps {
 
 const listContainerBaseStyle: React.CSSProperties = {
     
-    backgroundColor: '#f8f8f8',
-    borderRight: '1px solid #ddd',
+    backgroundColor: '#a09b9a',
     height: '100%',
     overflowY: 'auto', 
     
@@ -25,15 +24,16 @@ const listContainerBaseStyle: React.CSSProperties = {
 
 const searchContainerStyle: React.CSSProperties = {
     padding: '10px 0',
-    borderBottom: '1px solid #ddd',
+    borderBottom: '1px solid #0f0f1bff',
     marginBottom: '10px',
+    color: '#333',
 };
 
 
 const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px',
-    border: '1px solid #ccc',
+    border: '1px solid #000000ff',
     borderRadius: '5px',
     boxSizing: 'border-box', 
     fontSize: '1em',
@@ -79,7 +79,7 @@ export default function ProjectList({ isOpen }: ProjectListProps) {
                     
                     <div style={{ padding: '0 10px' }}>
                         <h3 style={{ margin: 0 }}>All Projects</h3>
-                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#666' }}>
+                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#8c7373ff' }}>
                             {filteredProjects.length} projects found
                         </p>
                     </div>
@@ -101,7 +101,7 @@ export default function ProjectList({ isOpen }: ProjectListProps) {
                             
                             <div 
                                 key={project.id}
-                                style={{ border: '1px solid #ddd', padding: '15px', marginBottom: '10px', backgroundColor: 'white', borderRadius: '4px' }}
+                                style={{ border: '1px solid #ddd', padding: '15px', marginBottom: '10px', backgroundColor: '#efeae9ff', borderRadius: '4px' }}
                             >
                                 <h4 style={{ margin: '0 0 5px 0' }}>{project.name}</h4>
                                 <span style={{ backgroundColor: project.status === 'Completed' ? '#d4edda' : '#f9e6a0', padding: '3px 6px', fontSize: '0.8em', borderRadius: '3px' }}>

@@ -7,9 +7,11 @@ import ProjectList from './ProjectList';
 
 const pageContainerStyle: React.CSSProperties = {
   display: 'flex',
+  color: '#92765fff',
   flexDirection: 'column',
-  height: '100vh', // Full viewport height
-  overflow: 'hidden', // Prevents body scrollbars
+  height: '100vh', 
+  overflow: 'hidden', 
+  
 };
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -38,7 +40,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <div style={pageContainerStyle}>
 
 
-      <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> {/* <-- UPDATED */}
+      <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
 
       <div style={contentAreaStyle}>
 
