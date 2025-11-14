@@ -1,4 +1,5 @@
-// timformation/components/Header.tsx (New Top Bar Structure)
+// timformation/components/Header.tsx (TOATE ELEMENTELE FOLOSESC GOLDMAN)
+
 import Link from 'next/link';
 import React from 'react';
 
