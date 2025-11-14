@@ -26,7 +26,7 @@ const headerStyle: React.CSSProperties = {
     alignItems: 'center',
     padding: '10px 20px',
     // Am păstrat doar una dintre definițiile de culoare:
-    backgroundColor: '#130852ff', 
+    backgroundColor: '#08205b', 
     borderBottom: '1px solid #2452a7ff',
     boxShadow: '0 2px 4px rgba(16, 136, 60, 0.05)',
     height: '60px', 
@@ -39,7 +39,7 @@ const linkStyle: React.CSSProperties = {
     marginLeft: '20px',
     textDecoration: 'none',
     // Am păstrat doar una dintre definițiile de culoare:
-    color: '#9bb1d3ff',
+    color: '#d0e4ff',
     fontSize: '1em',
     // Nu mai este necesară aplicarea explicită a fontFamily aici, moștenește de la headerStyle.
 };
@@ -49,7 +49,7 @@ const iconBaseStyle: React.CSSProperties = {
     fontSize: '1.5em', 
     cursor: 'pointer', 
     marginRight: '15px',
-    color: '#F0E7D5', // Culoare deschisă unificată
+    color: '#f4ece4ff', // Culoare deschisă unificată
     transition: 'transform 0.3s ease-in-out', 
 };
 
@@ -81,7 +81,7 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
                         textDecoration: 'none', 
                         fontFamily: 'var(--font-goldman), sans-serif', // Aplicare explicită pentru titlu
                         // Am ales o culoare deschisă pentru a contrasta cu fundalul închis
-                        color: '#F0E7D5', 
+                        color: '#f4ece4ff', 
                         fontSize: '1.4em', 
                         fontWeight: 'bold' 
                     }}
@@ -104,7 +104,7 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
                 </Link>
                 
                 {/* Profile Icon Placeholder (Folosim culoarea linkStyle) */}
-                <span style={{ ...linkStyle, marginLeft: '30px' }}>👤</span> 
+                <span style={{ ...linkStyle, marginLeft: '30px' }}>Log In</span> 
             </nav>
         </header>
     );
