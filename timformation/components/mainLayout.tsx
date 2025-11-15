@@ -1,5 +1,5 @@
 
-'use client'; 
+'use client';
 import React, { useState } from 'react'; 
 import Header from './Header'; 
 import ProjectList from './ProjectList'; 
@@ -54,4 +54,65 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </div>
     </div>
   );
+
+
+  // FORM LOGIC - TO BE IMPLEMENTED
+  // const [form, setForm] = useState({
+  //   title: '',
+  //   designer: '',
+  //   location: '',
+  //   beneficiary: '',
+  //   status: 'în derulare',
+  //   totalValue: '',
+  //   realizationDurationMonths: '',
+  //   executionDurationMonths: '',
+  //   latestDecisionUrl: '',
+  //   latestChange: '',
+  //   category: '',
+  // });
+
+  // const [submitting, setSubmitting] = useState(false);
+  // const [message, setMessage] = useState<string | null>(null);
+
+  // const handleChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setForm((prev) => ({ ...prev, [name]: value }));
+  // };
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setSubmitting(true);
+  //   setMessage(null);
+
+  //   const payload = {
+  //     ...form,
+  //     totalValue: form.totalValue ? Number(form.totalValue) : undefined,
+  //     realizationDurationMonths: form.realizationDurationMonths
+  //       ? Number(form.realizationDurationMonths)
+  //       : undefined,
+  //     executionDurationMonths: form.executionDurationMonths
+  //       ? Number(form.executionDurationMonths)
+  //       : undefined,
+  //   };
+
+  //   const res = await fetch('/api/projects', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(payload),
+  //   });
+
+  //   const data = await res.json();
+
+  //   if (!res.ok) {
+  //     setMessage(`Error: ${data.error || 'something went wrong'}`);
+  //   } else {
+  //     setMessage('Project added successfully!');
+  //   }
+
+  //   setSubmitting(false);
+  // };
+
+  
 }
