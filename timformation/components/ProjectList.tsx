@@ -2,15 +2,16 @@
 
 'use client'; 
 
-import { createClient } from '@/libs/supabase/client';
+// `createClient` removed: this component receives projects from parent
 import { useState, useEffect, useMemo } from 'react';
 import React from 'react'; 
 
 
 
-interface Project {
+export interface Project {
     id: number;
     title: string;
+    name?: string;
     designer?: string;
     location: string;
     beneficiary?: string;  
@@ -26,6 +27,8 @@ interface Project {
 
 interface ProjectListProps {
     isOpen: boolean; 
+    projects: Project[];
+    loading: boolean;
 }
 
 
@@ -128,55 +131,54 @@ export const MOCK_PROJECTS = [
 ];
 
 // --- 4. Main Component ---
-export default function ProjectList({ isOpen }: ProjectListProps) {
+export default function ProjectList({ isOpen, projects, loading }: ProjectListProps) {
 
-    const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
+    // Use the loading prop passed from parent instead of a local loading state
+    // so the component shows the projects once the parent has finished fetching.
     const [statusFilter, setStatusFilter] = useState('All');
 
-    const supabase = createClient();
+    // Note: data is provided from parent; avoid creating an unused supabase client here
 
    
     // 4. ⚡ FETCHING LOGIC: Use useEffect to fetch data on mount
-    useEffect(() => {
-        async function fetchProjects() {
-            setIsLoading(true);
-            const { data, error } = await supabase
-                .from('projects') 
-                .select('*'); 
+    // useEffect(() => {
+    //     async function fetchProjects() {
+    //         setIsLoading(true);
+    //         const { data, error } = await supabase
+    //             .from('projects') 
+    //             .select('*'); 
 
-            if (error) {
-                console.error('Error fetching projects:', error);
-            } else if (data) {
-                console.log('✅ Successfully fetched project data:', data);
-                setProjects(data as Project[]);
-            }
-            setIsLoading(false);
-        }
+    //         if (error) {
+    //             console.error('Error fetching projects:', error);
+    //         } else if (data) {
+    //             console.log('✅ Successfully fetched project data:', data);
+    //             setProjects(data as Project[]);
+    //         }
+    //         setIsLoading(false);
+    //     }
 
-        fetchProjects();
-    }, []); // Empty dependency array ensures it runs only once on component mount
+    //     fetchProjects();
+    // }, []); // Empty dependency array ensures it runs only once on component mount
 
     // Filter projects using the fetched data and the search term
     const filteredProjects = useMemo(() => {
-        if (isLoading) return [];
+        if (loading) return [];
 
         const term = searchTerm.toLowerCase();
-        
-        return projects.filter((project) =>{
-            const matchesSearch =
-            project.title.toLowerCase().includes(term) ||
-            (project.location ?? '').toLowerCase().includes(term) ||
-            (project.designer ?? '').toLowerCase().includes(term);
 
-            // 2. Status filter: "All" = no filter
-            const matchesStatus =
-            statusFilter === 'All' || project.status === statusFilter;
+        return projects.filter((project) => {
+            // support either `title` or legacy/mock `name` field
+            const matchesSearch =
+                project.title.toLowerCase().includes(term) ||
+                ((project.location ?? '') as string).toLowerCase().includes(term) ||
+                ((project.designer ?? '') as string).toLowerCase().includes(term);
+
+            const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
 
             return matchesSearch && matchesStatus;
         });
-    }, [projects, searchTerm, isLoading, statusFilter]);
+    }, [projects, searchTerm, loading, statusFilter]);
    
     const finalContainerStyle: React.CSSProperties = {
         ...listContainerBaseStyle,
@@ -274,7 +276,7 @@ export default function ProjectList({ isOpen }: ProjectListProps) {
                                 onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                                 >
                 
-                                <h4 style={{ margin: '0 0 5px 0' }}>**{project.title}**</h4>   
+                                <h4 style={{ margin: '0 0 5px 0' }}>{project.title ?? project.name}</h4>
                                 <span 
                                     style={{ 
                                         backgroundColor: statusStyle.bg, 

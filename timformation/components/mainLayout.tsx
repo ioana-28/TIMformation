@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import ProjectList from './ProjectList';
+import { createClient } from '@/libs/supabase/client';
+
+import type { Project } from './ProjectList';
 
 import dynamic from 'next/dynamic';
 
@@ -17,7 +20,31 @@ const pageContainerStyle: React.CSSProperties = {
 };
 
 export default function MainLayout({ children }: { children?: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+   const [projects, setProjects] = useState<Project[]>([]);
+   const [isLoading, setIsLoading] = useState(true);
+
+   const supabase = createClient();
+
+
+  useEffect(() => {
+          async function fetchProjects() {
+              setIsLoading(true);
+              const { data, error } = await supabase
+                  .from('projects') 
+                  .select('*'); 
+  
+              if (error) {
+                  console.error('Error fetching projects:', error);
+              } else if (data) {
+                  console.log('✅ Successfully fetched project data:', data);
+                  setProjects(data as Project[]);
+              }
+              setIsLoading(false);
+          }
+  
+          fetchProjects();
+      }, []);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -40,7 +67,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
       <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} />
 
       <div style={contentAreaStyle}>
-        <ProjectList isOpen={isSidebarOpen} />
+        <ProjectList isOpen={isSidebarOpen} projects={projects} loading={isLoading}/>
         <div style={mapContainerStyle}>
       
           {children}
