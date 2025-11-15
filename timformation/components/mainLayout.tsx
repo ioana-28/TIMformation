@@ -69,7 +69,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
       <div style={contentAreaStyle}>
         <ProjectList isOpen={isSidebarOpen} projects={projects} loading={isLoading}/>
         <div style={mapContainerStyle}>
-      
+          <Map center={[45.7560, 21.2310]} zoom={13} projects={projects} loading={isLoading} />
           {children}
         </div>
       </div>

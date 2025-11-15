@@ -23,6 +23,8 @@ export interface Project {
     latest_change?: string;
     category?: string;
     description?: string;
+    latitude: number;
+    longitude: number;
 }
 
 interface ProjectListProps {
@@ -134,32 +136,8 @@ export const MOCK_PROJECTS = [
 export default function ProjectList({ isOpen, projects, loading }: ProjectListProps) {
 
     const [searchTerm, setSearchTerm] = useState('');
-    // Use the loading prop passed from parent instead of a local loading state
-    // so the component shows the projects once the parent has finished fetching.
     const [statusFilter, setStatusFilter] = useState('All');
 
-    // Note: data is provided from parent; avoid creating an unused supabase client here
-
-   
-    // 4. ⚡ FETCHING LOGIC: Use useEffect to fetch data on mount
-    // useEffect(() => {
-    //     async function fetchProjects() {
-    //         setIsLoading(true);
-    //         const { data, error } = await supabase
-    //             .from('projects') 
-    //             .select('*'); 
-
-    //         if (error) {
-    //             console.error('Error fetching projects:', error);
-    //         } else if (data) {
-    //             console.log('✅ Successfully fetched project data:', data);
-    //             setProjects(data as Project[]);
-    //         }
-    //         setIsLoading(false);
-    //     }
-
-    //     fetchProjects();
-    // }, []); // Empty dependency array ensures it runs only once on component mount
 
     // Filter projects using the fetched data and the search term
     const filteredProjects = useMemo(() => {
