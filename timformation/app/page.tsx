@@ -2,20 +2,18 @@
 
 'use client'; 
 import dynamic from 'next/dynamic'; 
-import MainLayout from '@/components/mainLayout';
+// 🚨 FIX 1: Import the component using the capitalized alias 'MainLayout'
+import MainLayout from '@/components/mainLayout'; 
 import { MOCK_PROJECTS } from '@/components/ProjectList'; 
+import React from 'react';
 
-// Define center coordinates (Piața Victoriei area is a good focal point)
-// Lat: 45.7538, Lng: 21.2257
+// Define center coordinates (for starting in the center)
 const TIMISOARA_CENTER: [number, number] = [45.7538, 21.2257]; 
-
-// 🚨 FIX: Zoom increased to 13-14 to start in the city center, 
-// rather than zoomed out to see the entire boundary (which was 11-12).
 const INITIAL_ZOOM = 14; 
 
 // Dynamic Import: Load the map only on the client, disable SSR
 const DynamicProjectMap = dynamic(
-  () => import('@/components/Map'),
+  () => import('@/components/Map'), // Assuming ProjectMap is the correct file name now
   { 
     ssr: false, 
     loading: () => <p style={{ padding: '20px', textAlign: 'center' }}>Harta se încarcă...</p>
@@ -25,12 +23,17 @@ const DynamicProjectMap = dynamic(
 
 export default function Home() {
   return (
+    // 🚨 FIX 2: Use the capitalized component name in the JSX
     <MainLayout>
-      <DynamicProjectMap 
-        center={TIMISOARA_CENTER} 
-        zoom={INITIAL_ZOOM} // Now starts closer to the center
-        projects={MOCK_PROJECTS} 
-      />
+      {/* Capture the state (isSidebarOpen) passed from MainLayout */}
+      {(isSidebarOpen) => (
+        <DynamicProjectMap 
+          center={TIMISOARA_CENTER} 
+          zoom={INITIAL_ZOOM} 
+          projects={MOCK_PROJECTS} 
+          isSidebarOpen={isSidebarOpen} 
+        />
+      )}
     </MainLayout>
   );
 }
