@@ -49,11 +49,28 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
 
   return (
     <header style={headerStyle} className={goldman.variable}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Link href="/" style={{ textDecoration: 'none', color: '#f4ece4ff', fontSize: '1.4em', fontWeight: 'bold' }}>
-          TIMformation
-        </Link>
-      </div>
+       <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span 
+                    style={iconRotatedStyle} // Aplicare stil rotit
+                    onClick={onMenuToggle}
+                >
+                    ☰ 
+                </span>
+                
+                <Link 
+                    href="/" 
+                    style={{ 
+                        textDecoration: 'none', 
+                        fontFamily: 'var(--font-goldman), sans-serif', // Aplicare explicită pentru titlu
+                        // Am ales o culoare deschisă pentru a contrasta cu fundalul închis
+                        color: '#f4ece4ff', 
+                        fontSize: '1.4em', 
+                        fontWeight: 'bold' 
+                    }}
+                >
+                    TIMformation
+                </Link>
+            </div>
 
       <nav style={{ display: 'flex', alignItems: 'center' }}>
         {user ? (
@@ -75,6 +92,8 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
       </nav>
     </header>
     );
+         
+           
 
 }
 

@@ -1,14 +1,18 @@
 // timformation/components/ProjectDetailsModal.tsx
 
-import React, { useState } from 'react';
-import { Project } from '../libs/ProjectList'; // Import the unified Project type
+import React, { useState, useEffect, useMemo } from 'react';
+import { Project } from './ProjectList'; // Import the unified Project type
+import { createClient } from '@/libs/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 // Define the Comment type (for local state)
 interface Comment {
     id: number;
-    user: string;
-    text: string;
-    date: string;
+    project_id: number;
+    author_id: string;
+    author_name: string;
+    content: string;
+    created_at: string;
 }
 
 interface ModalProps {
@@ -32,12 +36,71 @@ const inputStyle: React.CSSProperties = {
 
 export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
     // 1. State for managing comments and input
-    const [comments, setComments] = useState<Comment[]>([
-        // Mock Comments (Replace with API fetch later)
-        { id: 1, user: 'Cetățean_TM', text: 'Sper să termine trotuarele în Piața Unirii înainte de iarnă.', date: 'ieri' },
-        { id: 2, user: 'Primăria', text: 'Termenul estimat este realist. Mulțumim pentru feedback!', date: 'astăzi' },
-    ]);
+    const [comments, setComments] = useState<Comment[]>([]);
     const [newCommentText, setNewCommentText] = useState('');
+    const [loadingComments, setLoadingComments] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const supabase = useMemo(() => createClient(), []);
+
+    // Fetch current user and project comments when modal opens / project changes
+    useEffect(() => {
+        let mounted = true;
+        async function load() {
+            setLoadingComments(true);
+
+            // get current user (if any)
+            try {
+                const { data: userData } = await supabase.auth.getUser();
+                if (!mounted) return;
+                setUser(userData?.user ?? null);
+            } catch (e) {
+                console.warn('Error fetching user from Supabase', e);
+            }
+
+            // fetch comments for this project
+            try {
+                const { data, error } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .eq('project_id', project.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching comments:', error);
+                } else if (data) {
+                    if (!mounted) return;
+                    // map to local Comment shape (ensure author_name exists)
+                    type DBComment = {
+                        id: number;
+                        project_id: number;
+                        author_id: string;
+                        author_name: string;
+                        content: string;
+                        created_at: string;
+                    };
+                    const mapped: Comment[] = (data as DBComment[]).map((c) => ({
+                        id: c.id,
+                        project_id: c.project_id,
+                        author_id: c.author_id,
+                        author_name: c.author_name,
+                        content: c.content,
+                        created_at: c.created_at,
+                    }));
+                    setComments(mapped);
+                }
+            } catch (e) {
+                console.error('Unexpected error fetching comments', e);
+            }
+
+            setLoadingComments(false);
+        }
+
+        load();
+
+        return () => {
+            mounted = false;
+        };
+    }, [project.id, supabase]);
 
     // Helper to get status color
     const getStatusTagStyle = (status: string) => { /* ... */ 
@@ -51,21 +114,46 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
     const statusStyle = getStatusTagStyle(project.status);
 
     // 2. Handler for adding a new comment
-    const handlePostComment = (e: React.FormEvent) => {
+    const handlePostComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newCommentText.trim() === '') return;
 
-        // 🚨 FUTURE: Replace this client-side mock with an async POST request to the Node.js API
-        
-        const newComment: Comment = {
-            id: Date.now(),
-            user: 'Utilizator Curent', // Replace with actual authenticated username
-            text: newCommentText.trim(),
-            date: new Date().toLocaleDateString('ro-RO'),
+        if (!user) {
+            // Shouldn't happen because UI will disable the form, but guard anyway
+            alert('Trebuie să fii autentificat pentru a posta un comentariu.');
+            return;
+        }
+
+        const payload = {
+            project_id: project.id,
+            author_id: user.id,
+            author_name: (user.user_metadata && user.user_metadata.full_name) || user.email || 'Utilizator',
+            content: newCommentText.trim(),
         };
 
-        setComments([newComment, ...comments]); // Add new comment to the top
-        setNewCommentText('');
+        try {
+            const { data, error } = await supabase.from('comments').insert(payload).select().single();
+            if (error) {
+                console.error('Error inserting comment:', error);
+                alert('A apărut o eroare la postarea comentariului.');
+                return;
+            }
+
+            const inserted: Comment = {
+                id: data.id,
+                project_id: data.project_id,
+                author_id: data.author_id ?? null,
+                author_name: data.author_name ?? (data.author_id ?? 'Utilizator'),
+                content: data.content,
+                created_at: data.created_at,
+            };
+
+            setComments(prev => [inserted, ...prev]);
+            setNewCommentText('');
+        } catch (e) {
+            console.error('Unexpected error posting comment', e);
+            alert('A apărut o eroare la postarea comentariului.');
+        }
     };
 
     return (
@@ -109,11 +197,16 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                         value={newCommentText}
                         onChange={(e) => setNewCommentText(e.target.value)}
                         required
+                        disabled={!user}
                     />
+                    {!user && (
+                        <p style={{ color: '#b00', margin: '6px 0' }}>Trebuie să fii autentificat pentru a posta un comentariu.</p>
+                    )}
                     <button 
                         type="submit" 
+                        disabled={!user}
                         style={{ 
-                            padding: '8px 15px', backgroundColor: '#31708f', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.9em', float: 'right'
+                            padding: '8px 15px', backgroundColor: '#31708f', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.9em', float: 'right', opacity: !user ? 0.6 : 1, cursor: !user ? 'not-allowed' : 'pointer'
                         }}
                     >
                         Postează Comentariul
@@ -123,18 +216,23 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
 
                 {/* Listă Comentarii */}
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {comments.map(comment => (
-                        <div key={comment.id} style={{ borderBottom: '1px dotted #ccc', padding: '10px 0' }}>
-                            <p style={{ margin: '0 0 5px 0' }}>
-                                <strong>{comment.user}</strong> 
-                                <span style={{ fontSize: '0.8em', color: '#999', marginLeft: '10px' }}>
-                                    — {comment.date}
-                                </span>
-                            </p>
-                            <p style={{ margin: 0 }}>{comment.text}</p>
-                        </div>
-                    ))}
-                    {comments.length === 0 && <p style={{ color: '#666' }}>Fii primul care comentează acest proiect!</p>}
+                    {loadingComments ? (
+                        <p style={{ color: '#666' }}>Se încarcă comentariile...</p>
+                    ) : comments.length > 0 ? (
+                        comments.map(comment => (
+                            <div key={comment.id} style={{ borderBottom: '1px dotted #ccc', padding: '10px 0' }}>
+                                <p style={{ margin: '0 0 5px 0' }}>
+                                    <strong>{comment.author_name}</strong>
+                                    <span style={{ fontSize: '0.8em', color: '#999', marginLeft: '10px' }}>
+                                        — {comment.created_at}
+                                    </span>
+                                </p>
+                                <p style={{ margin: 0 }}>{comment.content}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p style={{ color: '#666' }}>Fii primul care comentează acest proiect!</p>
+                    )}
                 </div>
                 
             </div>
