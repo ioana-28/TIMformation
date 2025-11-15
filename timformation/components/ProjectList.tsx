@@ -54,7 +54,7 @@ const getStatusColor = (status: string) => {
 };
 
 // --- 3. Mock Data with Coordinates and Details ---
-const MOCK_PROJECTS = [
+export const MOCK_PROJECTS = [
     { 
         id: 1, 
         name: 'Downtown Bridge Renovation', 
