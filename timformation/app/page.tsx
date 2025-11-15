@@ -2,16 +2,17 @@
 
 'use client'; 
 import dynamic from 'next/dynamic'; 
-import MainLayout from '@/components/mainLayout'; // Correct import name
-import { MOCK_PROJECTS } from '@/components/ProjectList'; // Importă proiectele pentru hartă
+import MainLayout from '@/components/mainLayout'; // CORRECTED: Capital M
+import { MOCK_PROJECTS } from '@/components/ProjectList'; 
 
-// Define center coordinates (păstrate)
-const TIMISOARA_CENTER: [number, number] = [45.7489, 21.2087]; 
-const INITIAL_ZOOM = 14; 
+// Define center coordinates 
+const TIMISOARA_CENTER: [number, number] = [45.753, 21.229]; 
+// 🚨 FIX: Zoom out to see the entire boundary (level 11 is a good start)
+const INITIAL_ZOOM = 11; 
 
-// 2. Dynamic Import: Load the map only on the client, disable SSR
+// Dynamic Import: Load the map only on the client, disable SSR
 const DynamicProjectMap = dynamic(
-  () => import('@/components/Map'), // Corrected path to ProjectMap
+  () => import('@/components/Map'),
   { 
     ssr: false, 
     loading: () => <p style={{ padding: '20px', textAlign: 'center' }}>Harta se încarcă...</p>
@@ -22,7 +23,6 @@ const DynamicProjectMap = dynamic(
 export default function Home() {
   return (
     <MainLayout>
-      {/* 3. Utilizează componenta dinamică */}
       <DynamicProjectMap 
         center={TIMISOARA_CENTER} 
         zoom={INITIAL_ZOOM} 

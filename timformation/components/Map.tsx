@@ -7,7 +7,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Import GeoJSON data (Ensure this path is correct: ../src/data/timisoaraBoundary.json)
+// Import GeoJSON data (THIS FILE MUST CONTAIN THE COMPLEX OSM DATA)
 import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
 
 
@@ -26,7 +26,6 @@ function MapInvalidator() {
   const map = useMap(); 
 
   useEffect(() => {
-    // Forces the map to measure its container size again after the Flexbox layout stabilizes
     map.invalidateSize();
   }, [map]); 
 
@@ -51,19 +50,24 @@ interface MapProps {
   projects: Project[]; 
 }
 
-// 💥 ADJUSTED STYLE FOR DARKER, THICKER CONTOUR 💥
+// 💥 ADJUSTED STYLE: Navy Blue (Header color) and THINNER LINE (weight: 2) 💥
 const geoJsonStyle = {
-    color: "#000000",      // Set line color to black for maximum contrast
-    weight: 5,               // Increased thickness
-    opacity: 1.0,            // Fully opaque line
+    color: "#739cc0ff",      // Navy Blue
+    weight: 2,             // 🛠️ CHANGED: Reduced thickness to 2
+    opacity: 1.0,          // Fully opaque line
     fillColor: "#130852ff",  
-    fillOpacity: 0.05,       // Very light fill color
+    fillOpacity: 0.08,     // Light fill
 };
 
 // ------------------------------------------------
 
+// --- Filter Function (Kept intact to allow the boundary to draw) ---
+const filterCityBoundary = (feature: any) => {
+    return true; 
+};
+// ------------------------------------------------
+
 export default function ProjectMap({ center, zoom, projects }: MapProps) {
-  // State to track if the component has mounted on the client (SSR Fix)
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -71,7 +75,6 @@ export default function ProjectMap({ center, zoom, projects }: MapProps) {
   }, []);
 
   if (!hasMounted) {
-    // Return a stable, loading placeholder during the mounting phase
     return (
         <div 
             style={{ 
@@ -105,8 +108,8 @@ export default function ProjectMap({ center, zoom, projects }: MapProps) {
       {/* Integrate the performance fix */}
       <MapInvalidator /> 
 
-      {/* GeoJSON Layer for City Contour (Now Darker) */}
-      <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} />
+      {/* GeoJSON Layer for City Contour (Navy and Thinner) */}
+      <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} filter={filterCityBoundary} />
 
       {/* Loop through the projects to create markers */}
       {projects.map(project => (
