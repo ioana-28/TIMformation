@@ -42,7 +42,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
       <div style={contentAreaStyle}>
         <ProjectList isOpen={isSidebarOpen} />
         <div style={mapContainerStyle}>
-          <Map />
+      
           {children}
         </div>
       </div>
