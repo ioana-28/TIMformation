@@ -3,10 +3,10 @@
 'use client'; 
 import React, { useState } from 'react'; 
 import Header from './Header'; 
-import ProjectList, { Project, MOCK_PROJECTS } from './ProjectList'; // Import Project type and data
+import ProjectList, { MOCK_PROJECTS, Project } from './ProjectList'; // Import Project type and data
 import ProjectDetailsModal from './ProjectDetailsModal'; 
 
-// --- Style Definitions ---
+// --- 1. Style Definitions (REQUIRED FIXES) ---
 const pageContainerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -25,51 +25,81 @@ const mapContainerStyle: React.CSSProperties = {
     position: 'relative',
     transition: 'flex-grow 0.3s ease-in-out', 
 };
+// ---------------------------------------------
 
-// Define the children render prop type
+// 🚨 FIX 1: Define the MainLayoutProps interface
 interface MainLayoutProps {
-    children: (isSidebarOpen: boolean, openDetailsModal: (project: Project) => void) => React.ReactNode; 
+    children: (
+        isSidebarOpen: boolean, 
+        openDetailsModal: (project: Project) => void, 
+        filteredProjects: Project[] // Pass filtered projects to children (Map)
+    ) => React.ReactNode; 
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null); 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null); 
+    
+    // 🚨 NEW STATES: Centralized Filter States
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All'); 
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-  
-  // Function to open the modal
-  const openDetailsModal = (project: Project) => {
-    // Ensures we pass the full project object including description
-    const fullProject = MOCK_PROJECTS.find(p => p.id === project.id) || project;
-    setSelectedProject(fullProject);
-  };
-  
-  // Function to close the modal
-  const closeDetailsModal = () => {
-    setSelectedProject(null);
-  };
-  
-  return (
-    <div style={pageContainerStyle}>
-        <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
+    // --- FILTERING LOGIC ---
+    const filteredProjects = MOCK_PROJECTS.filter(project => {
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = (
+            project.name.toLowerCase().includes(term) ||
+            project.designer.toLowerCase().includes(term) ||
+            project.location.toLowerCase().includes(term)
+        );
+        const matchesStatus = (
+            statusFilter === 'All' || project.status === statusFilter
+        );
+        return matchesSearch && matchesStatus;
+    });
+    // -------------------------
 
-        <div style={contentAreaStyle}>
+    // 🚨 FIX 2: Implement toggleSidebar
+    const toggleSidebar = () => {
+        setIsSidebarOpen(!isSidebarOpen);
+    };
+    
+    // 🚨 FIX 3: Implement openDetailsModal
+    const openDetailsModal = (project: Project) => {
+        // Ensure we pass the full project object including description
+        const fullProject = MOCK_PROJECTS.find(p => p.id === project.id) || project;
+        setSelectedProject(fullProject);
+    };
+    
+    // 🚨 FIX 4: Implement closeDetailsModal
+    const closeDetailsModal = () => {
+        setSelectedProject(null);
+    };
+    
+    return (
+        <div style={pageContainerStyle}>
+            <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
 
-            <ProjectList isOpen={isSidebarOpen} onProjectClick={openDetailsModal} /> 
+            <div style={contentAreaStyle}>
+                {/* 🚨 ProjectList receives the current filter states and setters 🚨 */}
+                <ProjectList 
+                    isOpen={isSidebarOpen} 
+                    onProjectClick={openDetailsModal} 
+                    setSearchTerm={setSearchTerm} 
+                    setStatusFilter={setStatusFilter} 
+                    filteredProjects={filteredProjects} // Pass results back to list for rendering
+                /> 
 
-            {/* Execute the children function, passing the state and the click handler */}
-            <div style={mapContainerStyle}>
-                {children(isSidebarOpen, openDetailsModal)} 
+                {/* Execute children (the map component), passing state and filtered data */}
+                <div style={mapContainerStyle}>
+                    {children(isSidebarOpen, openDetailsModal, filteredProjects)} 
+                </div>
+                
+                {/* Modal Render */}
+                {selectedProject && (
+                    <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
+                )}
             </div>
-            
-            {/* MODAL RENDERED HERE */}
-            {selectedProject && (
-                <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
-            )}
-
         </div>
-    </div>
-  );
+    );
 }

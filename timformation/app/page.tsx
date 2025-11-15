@@ -2,8 +2,9 @@
 
 'use client'; 
 import dynamic from 'next/dynamic'; 
-import MainLayout from '@/components/mainLayout'; // ✅ Using capitalized alias
-import { MOCK_PROJECTS } from '@/components/ProjectList'; 
+import MainLayout from '@/components/mainLayout';
+// 🚨 FIX: Import the Project interface here 🚨
+import { MOCK_PROJECTS, Project } from '@/components/ProjectList'; 
 import React from 'react';
 
 // Define center coordinates (for starting in the center)
@@ -12,7 +13,7 @@ const INITIAL_ZOOM = 14;
 
 // Dynamic Import: Load the map only on the client, disable SSR
 const DynamicProjectMap = dynamic(
-  () => import('@/components/Map'), 
+  () => import('@/components/Map'), // Assuming ProjectMap is the file name
   { 
     ssr: false, 
     loading: () => <p style={{ padding: '20px', textAlign: 'center' }}>Harta se încarcă...</p>
@@ -22,14 +23,13 @@ const DynamicProjectMap = dynamic(
 
 export default function Home() {
   return (
-    // Use the capitalized JSX tag
     <MainLayout>
-      {/* Capture the state AND the new openDetailsModal function */}
-      {(isSidebarOpen: boolean, openDetailsModal: any) => (
+      {/* Capture the state AND the new openDetailsModal function, now with correct Project[] type */}
+      {(isSidebarOpen: boolean, openDetailsModal: any, filteredProjects: Project[]) => (
         <DynamicProjectMap 
           center={TIMISOARA_CENTER} 
           zoom={INITIAL_ZOOM} 
-          projects={MOCK_PROJECTS} 
+          projects={filteredProjects} 
           isSidebarOpen={isSidebarOpen} 
           openDetailsModal={openDetailsModal} 
         />

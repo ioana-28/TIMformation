@@ -21,6 +21,10 @@ export interface Project {
 interface ProjectListProps {
     isOpen: boolean; 
     onProjectClick: (project: Project) => void; 
+    // 🚨 NEW PROPS: Receive the setters and the filtered list
+    setSearchTerm: (term: string) => void;
+    setStatusFilter: (status: string) => void;
+    filteredProjects: Project[]; // Receive filtered list (results) for display
 }
 
 
@@ -46,7 +50,6 @@ const inputStyle: React.CSSProperties = {
     borderRadius: '8px', 
     boxSizing: 'border-box', 
     fontSize: '1em',
-    color: '#0e0226ff',
 };
 
 const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
@@ -61,7 +64,7 @@ const getStatusColor = (status: string) => {
     }
 };
 
-// --- 3. Mock Data with Coordinates and Details (EXPORTED) ---
+// --- 3. Mock Data (EXPORTED) ---
 export const MOCK_PROJECTS: Project[] = [
     { 
         id: 1, name: 'Downtown Bridge Renovation', status: 'In Progress', designer: 'Global Engineering SRL', location: 'Piața Unirii, Timișoara', description: 'Complete renovation of the historic downtown bridge including structural reinforcement and accessibility improvements.',
@@ -86,27 +89,25 @@ export const MOCK_PROJECTS: Project[] = [
 ];
 
 // --- 4. Main Component ---
-export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps) {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All'); 
+export default function ProjectList({ isOpen, onProjectClick, setSearchTerm, setStatusFilter, filteredProjects }: ProjectListProps) {
+    // Local state to manage input display values (as the actual filter state is in MainLayout)
+    const [localSearchTerm, setLocalSearchTerm] = useState('');
+    const [localStatusFilter, setLocalStatusFilter] = useState('All'); 
 
-    const filteredProjects = MOCK_PROJECTS.filter(project => {
-        const term = searchTerm.toLowerCase();
-        
-        const matchesSearch = (
-            project.name.toLowerCase().includes(term) ||
-            project.designer.toLowerCase().includes(term) ||
-            project.location.toLowerCase().includes(term)
-        );
-
-        const matchesStatus = (
-            statusFilter === 'All' || project.status === statusFilter
-        );
-
-        return matchesSearch && matchesStatus;
-    });
-
+    // Handlers to update both local state (for controlled input) and the parent's state (for filtering)
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setLocalSearchTerm(value);
+        setSearchTerm(value); // Passes value up to MainLayout
+    };
     
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setLocalStatusFilter(value);
+        setStatusFilter(value); // Passes value up to MainLayout
+    };
+
+
     const finalContainerStyle: React.CSSProperties = {
         ...listContainerBaseStyle,
         
@@ -129,13 +130,12 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                             paddingBottom: '5px', 
                             borderBottomWidth: '1px',
                             borderBottomStyle: 'solid',
-                            borderBottomColor: '#c7c7c7',
-                            color:'#0b0530ff    ',
+                            borderBottomColor: '#c7c7c7'
                         }}>
                             All Projects
                         </h3>
                         
-                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#c2d1e9ff' }}>
+                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#666' }}>
                             {filteredProjects.length} projects found
                         </p>
                         <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 15px 0' }} />
@@ -148,10 +148,11 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                         </label>
                         <select
                             id="status-filter"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
+                            value={localStatusFilter}
+                            onChange={handleStatusChange}
                             style={{
-                                width: '100%', padding: '8px',color:'rgba(0, 0, 0, 0.88)', border: '1px solid #ccc', borderRadius: '8px', boxSizing: 'border-box', fontSize: '1em', backgroundColor: 'white',
+                                width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '8px', boxSizing: 'border-box', fontSize: '1em', backgroundColor: 'white',
+                                color: '#333' // Fixed text color
                             }}
                         >
                             {STATUS_OPTIONS.map(status => (
@@ -167,21 +168,21 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                         <input
                             type="text"
                             placeholder="Search..." 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            value={localSearchTerm}
+                            onChange={handleSearchChange}
                             style={inputStyle}
                         />
                     </div>
                     
                     {/* 4. Project Cards List Area */}
                     <div style={{ padding: '0 10px' }}>
+                        {/* 🚨 RENDER FILTERED LIST (passed from parent) 🚨 */}
                         {filteredProjects.map(project => {
                             const statusStyle = getStatusColor(project.status); 
                             
                             return (
                                 <div 
                                     key={project.id}
-                                    // ON CLICK: Trigger the modal in the parent component
                                     onClick={() => onProjectClick(project)} 
                                     style={{ 
                                         borderWidth: '1px', borderStyle: 'solid', borderColor: '#ddd', padding: '15px', marginBottom: '10px', backgroundColor: '#ffffff', 
@@ -233,7 +234,7 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                         })}
                         {filteredProjects.length === 0 && (
                             <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-                                No projects found matching '{searchTerm}'.
+                                No projects found matching '{localSearchTerm}'.
                             </p>
                         )}
                     </div>
