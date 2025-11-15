@@ -1,25 +1,33 @@
 // timformation/app/page.tsx
 
 'use client'; 
-import MainLayout from '@/components/mainLayout';
-import React from 'react';
+import dynamic from 'next/dynamic'; 
+import MainLayout from '@/components/mainLayout'; // CORRECTED: Capital M
+import { MOCK_PROJECTS } from '@/components/ProjectList'; 
+
+// Define center coordinates 
+const TIMISOARA_CENTER: [number, number] = [45.753, 21.229]; 
+// 🚨 FIX: Zoom out to see the entire boundary (level 11 is a good start)
+const INITIAL_ZOOM = 11; 
+
+// Dynamic Import: Load the map only on the client, disable SSR
+const DynamicProjectMap = dynamic(
+  () => import('@/components/Map'),
+  { 
+    ssr: false, 
+    loading: () => <p style={{ padding: '20px', textAlign: 'center' }}>Harta se încarcă...</p>
+  }
+);
+
 
 export default function Home() {
   return (
     <MainLayout>
-      {/* CONTENT INSIDE MainLayout is the Map Area */}
-      <div style={{ 
-        height: '100%', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        backgroundColor: '#eee' 
-      }}>
-        {/* This is where your Map component will go! */}
-        <h1>Aici va fi Harta Proiectelor Timișoara</h1>
-      </div>
-      {/* Note: The map zoom controls will be built into the map library itself */}
+      <DynamicProjectMap 
+        center={TIMISOARA_CENTER} 
+        zoom={INITIAL_ZOOM} 
+        projects={MOCK_PROJECTS} 
+      />
     </MainLayout>
   );
 }
