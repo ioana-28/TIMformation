@@ -11,7 +11,17 @@ import React from 'react';
 interface Project {
     id: number;
     title: string;
+    designer?: string;
+    location: string;
+    beneficiary?: string;  
     status: string;
+    total_value?: number;
+    realization_duration_months?: number;
+    execution_duration_months?: number;
+    latest_decision_url?: string;
+    latest_change?: string;
+    category?: string;
+    description?: string;
 }
 
 interface ProjectListProps {
@@ -47,14 +57,6 @@ const inputStyle: React.CSSProperties = {
 
 const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
 
-
-// const MOCK_PROJECTS = [
-//     { id: 1, name: 'Downtown Bridge Renovation', status: 'In Progress' },
-//     { id: 2, name: 'Central Park Playground', status: 'Planning' },
-//     { id: 3, name: 'Fifth Avenue Sidewalk Repairs', status: 'In Progress' },
-//     { id: 4, name: 'Timișoara Main Road Paving', status: 'In Progress' },
-//     { id: 5, name: 'New City Hall Annex', status: 'Completed' },
-// ];
 
 
 // --- 2. Coordinated Color Helpers ---
@@ -131,6 +133,7 @@ export default function ProjectList({ isOpen }: ProjectListProps) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [statusFilter, setStatusFilter] = useState('All');
 
     const supabase = createClient();
 
@@ -158,12 +161,22 @@ export default function ProjectList({ isOpen }: ProjectListProps) {
     // Filter projects using the fetched data and the search term
     const filteredProjects = useMemo(() => {
         if (isLoading) return [];
+
+        const term = searchTerm.toLowerCase();
         
-        return projects.filter(project =>
-            // Filter using the 'title' property
-            project.title.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [projects, searchTerm, isLoading]);
+        return projects.filter((project) =>{
+            const matchesSearch =
+            project.title.toLowerCase().includes(term) ||
+            (project.location ?? '').toLowerCase().includes(term) ||
+            (project.designer ?? '').toLowerCase().includes(term);
+
+            // 2. Status filter: "All" = no filter
+            const matchesStatus =
+            statusFilter === 'All' || project.status === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [projects, searchTerm, isLoading, statusFilter]);
    
     const finalContainerStyle: React.CSSProperties = {
         ...listContainerBaseStyle,
@@ -177,212 +190,133 @@ export default function ProjectList({ isOpen }: ProjectListProps) {
         pointerEvents: isOpen ? 'auto' : 'none', 
     };
 
-    /*
+
+
     return (
         <aside style={finalContainerStyle}>
-            {isOpen && (
-                <>
-                    {/* Header Section */}
-                      <div style={{ padding: '0 10px' }}>
-    {/* 1. All Projects Header with Line */}
-    <h3 style={{ 
-        margin: 0, 
-        paddingBottom: '5px', // Space above the line
-        // CORRECTED SYNTAX: width style color
-        borderBottom: '1px solid #c7c7c7' 
-    }}>
-        All Projects
-    </h3>
-    
-    {/* 2. Project Count */}
-    <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#666' }}>
-        {filteredProjects.length} projects found
-    </p>
+            {isOpen && (<>
+                <div style={{ padding: '0 10px' }}>
+                    <h3 style={{ 
+                        margin: 0, 
+                        paddingBottom: '5px', // Space above the line
+                        // CORRECTED SYNTAX: width style color
+                        borderBottom: '1px solid #c7c7c7' 
+                    }}>
+                        All Projects
+                    </h3>
+            
+                    <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#666' }}>
+                        {filteredProjects.length} projects found
+                    </p>
 
-    {/* 3. Horizontal Rule (Line after the count) */}
-    <hr style={{ borderTop: '1px solid #e0e0e0', margin: '0 0 15px 0' }} />
-</div>
+                    <hr style={{ borderTop: '1px solid #e0e0e0', margin: '0 0 15px 0' }} />
+                </div>
 
                    
 
-                    {/* Search Bar */}
-                    <div style={searchContainerStyle}>
-                        <input
-                            type="text"
-                            placeholder="Search projects by name, location, or designer..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={inputStyle}
-
-                            
+                <div style={searchContainerStyle}>
+                    <input
+                        type="text"
+                        placeholder="Search projects by name, location, or designer..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={inputStyle}     
                         />
-                    </div>
-                     {/* New Status Filter Dropdown */}
-                    <div style={{ marginBottom: '15px', padding: '0 10px' }}>
-                        <label htmlFor="status-filter" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: '#555' }}>
-                            Filter by Status:
-                        </label>
-                        <select
-                            id="status-filter"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                border: '1px solid #ccc',
-                                borderRadius: '8px',
-                                boxSizing: 'border-box',
-                                fontSize: '1em',
-                                backgroundColor: 'white',
-                            }}
-                        >
-                            {STATUS_OPTIONS.map(status => (
-                                <option key={status} value={status}>
-                                    {status}
-                                </option>
+                </div>
+
+                <div style={{ marginBottom: '15px', padding: '0 10px' }}>
+                    <label htmlFor="status-filter" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: '#555' }}>
+                        Filter by Status:
+                    </label>
+                    <select
+                        id="status-filter"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: '1px solid #ccc',
+                            borderRadius: '8px',
+                            boxSizing: 'border-box',
+                            fontSize: '1em',
+                            backgroundColor: 'white',
+                        }}
+                    >
+                        {STATUS_OPTIONS.map(status => (
+                            <option key={status} value={status}>
+                                {status}
+                            </option>
                             ))}
-                        </select>
-                    </div>
+                    </select>
+                </div>
                     
-                    {/* Project Cards List Area */}
-                    <div style={{ padding: '0 10px' }}>
-                        {filteredProjects.map(project => {
-                            const statusStyle = getStatusColor(project.status); 
+                <div style={{ padding: '0 10px' }}>
+                    {filteredProjects.map(project => {
+                        const statusStyle = getStatusColor(project.status); 
                             
-                            return (
-                                <div 
-                                    key={project.id}
-                                    style={{ 
-                                        // Rounded card styling
-                                        border: '1px solid #ddd', 
-                                        padding: '15px', 
-                                        marginBottom: '10px', 
-                                        backgroundColor: '#ffffff', 
-                                        borderRadius: '10px', 
-                                        boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-                                        transition: 'transform 0.2s ease-in-out', 
-                                        cursor: 'pointer', 
-                                        width: '100%',
-                                        boxSizing: 'border-box'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                >
-                                    {/* Titlu */}
-                                    <h4 style={{ margin: '0 0 5px 0' }}>**{project.name}**</h4>
-                                    
-                                    {/* Status Tag (Pill Shape) */}
-                                    <span 
-                                        style={{ 
-                                            backgroundColor: statusStyle.bg, 
-                                            color: statusStyle.text,
-                                            padding: '3px 8px', 
-                                            fontSize: '0.85em', 
-                                            borderRadius: '15px', 
-                                            fontWeight: '600', 
-                                            marginBottom: '10px', 
-                                            display: 'inline-block'
-                                        }}
-                                    >
-                                        {project.status}
-                                    </span>
-
-                                    <hr style={{ borderTop: '1px dashed #eee', margin: '10px 0' }} />
-
-                                    {/* Proiectant */}
-                                    <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
-                                        <span style={{ fontWeight: 'bold', color: '#555' }}>Proiectant:</span> {project.designer}
-                                    </p>
-
-                                    {/* Locație */}
-                                    <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
-                                        <span style={{ fontWeight: 'bold', color: '#555' }}>Locație:</span> {project.location}
-                                    </p>
-                                    
-                                    {/* Description */}
-                                    <p style={{ margin: '10px 0 0 0', fontSize: '0.9em', color: '#666' }}>
-                                        {project.description}
-                                    </p>
-                                </div>
-                            );
-                        })}
-                        {filteredProjects.length === 0 && (
-                            <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-                                No projects found matching '{searchTerm}'.
-                            </p>
-                        )}
-                    </div>
-                    
-                </>
-            )}
-        </aside>
-    );
-    */
-
-    return (
-        <aside style={finalContainerStyle}>
-            {isOpen && (
-                <>
-                    {/* Header and Count */}
-                    <div style={{ padding: '0 10px' }}>
-                        <h3 style={{ margin: 0 }}>All Projects</h3>
-                        {/* Show count or loading message */}
-                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#8c7373ff' }}>
-                            {isLoading ? 'Loading projects...' : `${filteredProjects.length} projects found`}
-                        </p>
-                    </div>
-
-                    {/* Search Bar */}
-                    <div style={searchContainerStyle}>
-                        <input
-                            type="text"
-                            placeholder="Search projects by name..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            style={inputStyle}
-                            disabled={isLoading} // Disable search while loading
-                        />
-                    </div>
-
-                    {/* Project List */}
-                    <div style={{ padding: '0 10px' }}>
-                        {/* 5. 🔄 JSX UPDATE: Handle loading state */}
-                        {isLoading && (
-                            <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-                                Connecting to Supabase...
-                            </p>
-                        )}
-                        
-                        {!isLoading && filteredProjects.map(project => (
+                        return (
                             <div 
                                 key={project.id}
-                                style={{ border: '1px solid #ddd', padding: '15px', marginBottom: '10px', backgroundColor: '#efeae9ff', borderRadius: '4px' }}
-                            >
-                                {/* Use project.title here */}
-                                <h4 style={{ margin: '0 0 5px 0' }}>{project.title}</h4> 
-                                <span style={{ backgroundColor: project.status === 'Completed' ? '#d4edda' : '#f9e6a0', padding: '3px 6px', fontSize: '0.8em', borderRadius: '3px' }}>
-                                    {project.status}
+                                style={{ 
+                                        // Rounded card styling
+                                    border: '1px solid #ddd', 
+                                    padding: '15px', 
+                                    marginBottom: '10px', 
+                                    backgroundColor: '#ffffff', 
+                                    borderRadius: '10px', 
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+                                    transition: 'transform 0.2s ease-in-out', 
+                                    cursor: 'pointer', 
+                                    width: '100%',
+                                    boxSizing: 'border-box'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                >
+                
+                                <h4 style={{ margin: '0 0 5px 0' }}>**{project.title}**</h4>   
+                                <span 
+                                    style={{ 
+                                        backgroundColor: statusStyle.bg, 
+                                        color: statusStyle.text,
+                                        padding: '3px 8px', 
+                                        fontSize: '0.85em', 
+                                        borderRadius: '15px', 
+                                        fontWeight: '600', 
+                                        marginBottom: '10px', 
+                                        display: 'inline-block'
+                                    }}
+                                    >
+                                        {project.status}
                                 </span>
+
+                                <hr style={{ borderTop: '1px dashed #eee', margin: '10px 0' }} />
+
+                                {/* Proiectant */}
+                                <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
+                                    <span style={{ fontWeight: 'bold', color: '#555' }}>Proiectant:</span> {project.designer}
+                                </p>
+
+                                <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
+                                    <span style={{ fontWeight: 'bold', color: '#555' }}>Locație:</span> {project.location}
+                                </p>
+                                    
+                                {/* Description */}
+                                <p style={{ margin: '10px 0 0 0', fontSize: '0.9em', color: '#666' }}>
+                                    {project.description}
+                                </p>
                             </div>
-                        ))}
-                        
-                        {!isLoading && filteredProjects.length === 0 && searchTerm !== '' && (
-                            <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-                                No projects found matching '{searchTerm}'.
-                            </p>
-                        )}
-                        {!isLoading && projects.length === 0 && searchTerm === '' && (
-                            <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-                                No projects have been added yet.
-                            </p>
-                        )}
-                    </div>
-                </>
+                            );
+                        })}
+                    {filteredProjects.length === 0 && (
+                        <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
+                            No projects found matching &apos;{searchTerm}&apos;.
+                        </p>
+                    )}
+                </div>
+                    
+            </>
             )}
         </aside>
     );
-
-
-
-
 }
