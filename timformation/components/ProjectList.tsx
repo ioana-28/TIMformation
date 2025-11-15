@@ -135,7 +135,7 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                             All Projects
                         </h3>
                         
-                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#0f043aff' }}>
+                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#c2d1e9ff' }}>
                             {filteredProjects.length} projects found
                         </p>
                         <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 15px 0' }} />

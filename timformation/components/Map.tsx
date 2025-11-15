@@ -77,8 +77,18 @@ const geoJsonStyle = {
     fillOpacity: 0.12,       
 };
 
-const filterCityBoundary = (feature: any) => { return true; };
-// ------------------------------------------------
+const filterCityBoundary = (feature: any) => { 
+    // Check if the feature has geometry
+    if (!feature.geometry) {
+        return false;
+    }
+
+    const geometryType = feature.geometry.type;
+
+    // Only allow drawing Polygons and MultiPolygons (the boundaries).
+    // Exclude 'Point' (the administrative center node)
+    return geometryType === 'MultiPolygon' || geometryType === 'Polygon';
+};
 
 export default function ProjectMap({ center, zoom, projects, isSidebarOpen, openDetailsModal }: MapProps) {
   const [hasMounted, setHasMounted] = useState(false);
@@ -134,7 +144,7 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
               <button 
                   onClick={() => openDetailsModal(project)} // Trigger modal function
                   style={{ 
-                      padding: '5px 10px', backgroundColor: '#31708f', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
+                      padding: '5px 10px', backgroundColor: '#132186ff', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
                   }}
               >
                 Vezi Detalii
