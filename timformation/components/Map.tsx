@@ -7,7 +7,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Import GeoJSON data (Ensure this path is correct)
+// Import GeoJSON data 
 import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
 
 
@@ -22,7 +22,6 @@ const MIN_ZOOM = 11;
 
 // --- Fix for default marker icons (ESSENTIAL for Next.js) ---
 delete (L.Icon.Default.prototype as any)._getIconUrl;
-
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -33,59 +32,44 @@ L.Icon.Default.mergeOptions({
 // --- Helper Component to Force Map Redraw (Performance Fix) ---
 function MapInvalidator() {
   const map = useMap(); 
-
-  useEffect(() => {
-    map.invalidateSize();
-  }, [map]); 
-
+  useEffect(() => { map.invalidateSize(); }, [map]); 
   return null; 
 }
 
 // --- Helper Component to Handle Sidebar Resizing (Fixes gray area) ---
-interface ResizeHandlerProps {
-    isSidebarOpen: boolean;
-}
+interface ResizeHandlerProps { isSidebarOpen: boolean; }
 function MapResizeHandler({ isSidebarOpen }: ResizeHandlerProps) {
     const map = useMap(); 
-
     useEffect(() => {
-        // Debounce the resize slightly to wait for CSS width transition to finish (350ms)
         const timer = setTimeout(() => {
             map.invalidateSize();
         }, 350); 
-
         return () => clearTimeout(timer);
     }, [isSidebarOpen, map]); 
-
     return null; 
 }
 // ------------------------------------------
 
 // --- Types ---
-interface Project {
-  id: number; name: string; status: string; designer: string; location: string; lat: number; lng: number;
-}
+interface Project { id: number; name: string; status: string; designer: string; location: string; lat: number; lng: number; }
 interface MapProps {
   center: [number, number]; zoom: number; projects: Project[]; isSidebarOpen: boolean; 
+  // NEW PROP
+  openDetailsModal: (project: Project) => void; 
 }
 
 // 💥 ADJUSTED STYLE FOR LIGHTER BLUE, THINNER CONTOUR 💥
 const geoJsonStyle = {
-    color: "#2452a7ff",      // Lighter Blue Accent
+    color: "#2452a7ff",      
     weight: 2,             
     opacity: 1.0,          
     fillColor: "#2452a7ff",  
     fillOpacity: 0.12,       
 };
-
-// --- Filter Function (Allows all features to pass, drawing the border) ---
-const filterCityBoundary = (feature: any) => {
-    return true; 
-};
-
+const filterCityBoundary = (feature: any) => { return true; };
 // ------------------------------------------------
 
-export default function ProjectMap({ center, zoom, projects, isSidebarOpen }: MapProps) {
+export default function ProjectMap({ center, zoom, projects, isSidebarOpen, openDetailsModal }: MapProps) {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -102,7 +86,6 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen }: Ma
     );
   }
 
-  // Render the MapContainer only when mounted
   return (
     <MapContainer 
       center={center} 
@@ -119,7 +102,7 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen }: Ma
       />
 
       <MapInvalidator /> 
-      <MapResizeHandler isSidebarOpen={isSidebarOpen} /> {/* 🚨 FIX: Forces map redraw on toggle */}
+      <MapResizeHandler isSidebarOpen={isSidebarOpen} /> 
 
       <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} filter={filterCityBoundary} />
 
@@ -131,15 +114,19 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen }: Ma
               <h4 style={{ margin: '0 0 5px 0' }}>**{project.name}** ({project.status})</h4>
               <p style={{ margin: '5px 0' }}>**Locație:** {project.location}</p>
               <p style={{ margin: '5px 0' }}>**Proiectant:** {project.designer}</p>
-              <button style={{ 
-                  padding: '5px 10px', backgroundColor: '#31708f', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
-              }}>
+              <button 
+                  onClick={() => openDetailsModal(project)} // 🚨 ON CLICK: Trigger the modal function
+                  style={{ 
+                      padding: '5px 10px', backgroundColor: '#31708f', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
+                  }}
+              >
                 Vezi Detalii
               </button>
             </div>
           </Popup>
         </Marker>
       ))}
+
     </MapContainer>
   );
 }

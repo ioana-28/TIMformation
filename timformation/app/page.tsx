@@ -2,7 +2,7 @@
 
 'use client'; 
 import dynamic from 'next/dynamic'; 
-// 🚨 FIX 1: Import the component using the capitalized alias 'MainLayout'
+// 🚨 FINAL FIX: Use the file path that matches your disk casing (lowercase 'mainLayout')
 import MainLayout from '@/components/mainLayout'; 
 import { MOCK_PROJECTS } from '@/components/ProjectList'; 
 import React from 'react';
@@ -13,7 +13,7 @@ const INITIAL_ZOOM = 14;
 
 // Dynamic Import: Load the map only on the client, disable SSR
 const DynamicProjectMap = dynamic(
-  () => import('@/components/Map'), // Assuming ProjectMap is the correct file name now
+  () => import('@/components/Map'),
   { 
     ssr: false, 
     loading: () => <p style={{ padding: '20px', textAlign: 'center' }}>Harta se încarcă...</p>
@@ -23,15 +23,16 @@ const DynamicProjectMap = dynamic(
 
 export default function Home() {
   return (
-    // 🚨 FIX 2: Use the capitalized component name in the JSX
+    // The JSX tag must remain capitalized for React to see it as a component
     <MainLayout>
-      {/* Capture the state (isSidebarOpen) passed from MainLayout */}
-      {(isSidebarOpen) => (
+      {/* Capture the state AND the new openDetailsModal function */}
+      {(isSidebarOpen: boolean, openDetailsModal: any) => (
         <DynamicProjectMap 
           center={TIMISOARA_CENTER} 
           zoom={INITIAL_ZOOM} 
           projects={MOCK_PROJECTS} 
           isSidebarOpen={isSidebarOpen} 
+          openDetailsModal={openDetailsModal}
         />
       )}
     </MainLayout>
