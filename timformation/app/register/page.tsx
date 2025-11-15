@@ -26,7 +26,7 @@ export default function RegisterPage() {
       password,
       options: {
         emailRedirectTo: undefined,
-        data: { display_name }, // SET metadata aici
+        data: { display_name: display_name }, // SET metadata aici
       },
     });
 
