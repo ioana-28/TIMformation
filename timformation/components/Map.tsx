@@ -7,8 +7,19 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Import GeoJSON data (THIS FILE MUST CONTAIN THE COMPLEX OSM DATA)
+// Import GeoJSON data 
 import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
+
+
+// --- 1. Define Boundary Constraints ---
+const MAX_BOUNDS: [[number, number], [number, number]] = [
+  // South West Corner (Min Lat: 45.68, Min Lng: 21.05)
+  [45.68, 21.05], 
+  // North East Corner (Max Lat: 45.85, Max Lng: 21.40)
+  [45.85, 21.40],
+];
+const MIN_ZOOM = 11; 
+// ------------------------------------
 
 
 // --- Fix for default marker icons (ESSENTIAL for Next.js) ---
@@ -50,18 +61,16 @@ interface MapProps {
   projects: Project[]; 
 }
 
-// 💥 ADJUSTED STYLE: Navy Blue (Header color) and THINNER LINE (weight: 2) 💥
+// Border Style (Lighter Blue, Thinner)
 const geoJsonStyle = {
-    color: "#739cc0ff",      // Navy Blue
-    weight: 2,             // 🛠️ CHANGED: Reduced thickness to 2
-    opacity: 1.0,          // Fully opaque line
-    fillColor: "#130852ff",  
-    fillOpacity: 0.08,     // Light fill
+    color: "#2452a7ff",      // Lighter Blue
+    weight: 2,             
+    opacity: 1.0,          
+    fillColor: "#2452a7ff",  
+    fillOpacity: 0.12,       
 };
 
-// ------------------------------------------------
-
-// --- Filter Function (Kept intact to allow the boundary to draw) ---
+// Filter Function (allows all features to draw)
 const filterCityBoundary = (feature: any) => {
     return true; 
 };
@@ -97,7 +106,13 @@ export default function ProjectMap({ center, zoom, projects }: MapProps) {
       center={center} 
       zoom={zoom} 
       scrollWheelZoom={true} 
-      style={{ height: '100%', width: '100%' }} // Critical dimensions
+      style={{ height: '100%', width: '100%' }}
+
+      // 💥 APPLIED BOUNDARY CONSTRAINTS 💥
+      maxBounds={MAX_BOUNDS}
+      minZoom={MIN_ZOOM} 
+      maxBoundsViscosity={0.9} 
+      
     >
       {/* Tile Layer: CartoDB Voyager */}
       <TileLayer
@@ -105,10 +120,9 @@ export default function ProjectMap({ center, zoom, projects }: MapProps) {
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
 
-      {/* Integrate the performance fix */}
       <MapInvalidator /> 
 
-      {/* GeoJSON Layer for City Contour (Navy and Thinner) */}
+      {/* GeoJSON Layer for City Contour */}
       <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} filter={filterCityBoundary} />
 
       {/* Loop through the projects to create markers */}
