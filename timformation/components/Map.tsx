@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-leaflet'; 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import type { Project } from './ProjectList';
 
 // Import GeoJSON data (Ensure this path is correct)
 import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
@@ -51,11 +52,8 @@ function MapResizeHandler({ isSidebarOpen }: ResizeHandlerProps) {
 }
 // ------------------------------------------
 
-// --- Types (Imported, but defined locally for context) ---
-interface Project { id: number; name: string; status: string; designer: string; location: string; lat: number; lng: number; description: string; }
-
 interface MapProps {
-  center: [number, number]; zoom: number; projects: Project[]; isSidebarOpen: boolean; 
+  center: [number, number]; zoom: number; projects: Project[]; isSidebarOpen: boolean;  loading: boolean;
   openDetailsModal: (project: Project) => void; 
 }
 
@@ -90,12 +88,12 @@ const filterCityBoundary = (feature: any) => {
     return geometryType === 'MultiPolygon' || geometryType === 'Polygon';
 };
 
-export default function ProjectMap({ center, zoom, projects, isSidebarOpen, openDetailsModal }: MapProps) {
+export default function ProjectMap({ center, zoom, projects, isSidebarOpen, openDetailsModal, loading }: MapProps) {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
-  }, []);
+  }, [loading]);
 
   if (!hasMounted) {
     return (
@@ -130,29 +128,35 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
       <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} filter={filterCityBoundary} />
 
       {/* Loop through the projects to create markers */}
-      {projects.map(project => (
-        <Marker 
-          key={project.id} 
-          position={[project.lat, project.lng]} 
-          icon={customIcon} // Applied custom icon
-        >
-          <Popup>
-            <div style={{ maxWidth: '200px' }}>
-              <h4 style={{ margin: '0 0 5px 0' }}>**{project.name}** ({project.status})</h4>
-              <p style={{ margin: '5px 0' }}>**Locație:** {project.location}</p>
-              <p style={{ margin: '5px 0' }}>**Proiectant:** {project.designer}</p>
-              <button 
-                  onClick={() => openDetailsModal(project)} // Trigger modal function
-                  style={{ 
+      {projects.map(project => {
+        // Skip projects without valid coordinates
+        if (!project.latitude || !project.longitude) {
+          console.warn(`Project "${project.title}" missing coordinates, skipping marker`);
+          return null;
+        }
+        return (
+          <Marker 
+            key={project.id} 
+            position={[project.latitude, project.longitude]} 
+            icon={customIcon}
+          >
+            <Popup>
+              <div style={{ maxWidth: '200px' }}>
+                <h4 style={{ margin: '0 0 5px 0' }}>{project.title} ({project.status})</h4>
+                <p style={{ margin: '5px 0' }}><strong>Locație:</strong> {project.location}</p>
+                <p style={{ margin: '5px 0' }}><strong>Proiectant:</strong> {project.designer}</p>
+                 <button 
+                    onClick={() => openDetailsModal(project)} // Trigger modal function
+                    style={{ 
                       padding: '5px 10px', backgroundColor: '#132186ff', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
-                  }}
-              >
-                Vezi Detalii
-              </button>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+                    }}>
+                  Vezi Detalii
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
 
     </MapContainer>
   );

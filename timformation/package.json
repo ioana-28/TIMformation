@@ -9,11 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.81.1",
+    "@tanstack/react-query": "^5.90.9",
     "leaflet": "^1.9.4",
-    "next": "16.0.3",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-leaflet": "^5.0.0"
+    "next": "^16.0.3",
+    "pg": "^8.16.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-leaflet": "^5.0.0",
+    "supabase": "^2.58.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
