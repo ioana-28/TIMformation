@@ -3,7 +3,7 @@
 'use client'; 
 import React, { useState } from 'react'; 
 import Header from './Header'; 
-import ProjectList, { MOCK_PROJECTS, Project } from './ProjectList'; // 🚨 Import Project type and data
+import ProjectList, { Project, MOCK_PROJECTS } from './ProjectList'; // Import Project type and data
 import ProjectDetailsModal from './ProjectDetailsModal'; 
 
 // --- Style Definitions ---
@@ -26,23 +26,22 @@ const mapContainerStyle: React.CSSProperties = {
     transition: 'flex-grow 0.3s ease-in-out', 
 };
 
-// 🚨 FIX: Define children as a function that accepts state AND the modal function
+// Define the children render prop type
 interface MainLayoutProps {
     children: (isSidebarOpen: boolean, openDetailsModal: (project: Project) => void) => React.ReactNode; 
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  // State uses the imported Project type
   const [selectedProject, setSelectedProject] = useState<Project | null>(null); 
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
   
-  // Function to open the modal and ensure the full project object is passed
+  // Function to open the modal
   const openDetailsModal = (project: Project) => {
-    // Finds the full project data from the array (if only an ID was passed, though here we pass the full object)
+    // Ensures we pass the full project object including description
     const fullProject = MOCK_PROJECTS.find(p => p.id === project.id) || project;
     setSelectedProject(fullProject);
   };
@@ -54,20 +53,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
   
   return (
     <div style={pageContainerStyle}>
-        {/* Header receives the state and toggle function */}
         <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
 
         <div style={contentAreaStyle}>
-            
-            {/* ProjectList receives the click handler */}
+
             <ProjectList isOpen={isSidebarOpen} onProjectClick={openDetailsModal} /> 
 
-            {/* Execute the children function (rendering the map) and pass the state/function */}
+            {/* Execute the children function, passing the state and the click handler */}
             <div style={mapContainerStyle}>
                 {children(isSidebarOpen, openDetailsModal)} 
             </div>
             
-            {/* 💥 MODAL RENDERED HERE 💥 */}
+            {/* MODAL RENDERED HERE */}
             {selectedProject && (
                 <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
             )}

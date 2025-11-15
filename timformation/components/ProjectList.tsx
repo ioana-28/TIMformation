@@ -5,21 +5,22 @@
 import { useState } from 'react';
 import React from 'react'; 
 
-export interface Project { // <--- ADD EXPORT HERE
+
+// Define the Project type (exported for use in MainLayout, ProjectMap, Modal)
+export interface Project {
     id: number; 
     name: string; 
     status: string; 
     designer: string; 
     location: string; 
-    description: string; // <--- The crucial field
+    description: string; // Crucial for the modal
     lat: number; 
     lng: number;
 }
 
 interface ProjectListProps {
     isOpen: boolean; 
-    // 🚨 NEW PROP: Function to trigger the modal (passed from MainLayout)
-    onProjectClick: (project: any) => void; 
+    onProjectClick: (project: Project) => void; 
 }
 
 
@@ -45,6 +46,7 @@ const inputStyle: React.CSSProperties = {
     borderRadius: '8px', 
     boxSizing: 'border-box', 
     fontSize: '1em',
+    color: '#0e0226ff',
 };
 
 const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
@@ -52,19 +54,15 @@ const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
 // --- 2. Coordinated Color Helpers ---
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'Completed':
-            return { bg: '#dcf8e5', text: '#3c763d' }; 
-        case 'Planning':
-            return { bg: '#f0e0d0', text: '#8a6d3b' }; 
-        case 'In Progress':
-            return { bg: '#cce5ff', text: '#31708f' }; 
-        default:
-            return { bg: '#f9f9f9', text: '#666' };
+        case 'Completed': return { bg: '#dcf8e5', text: '#3c763d' }; 
+        case 'Planning': return { bg: '#f0e0d0', text: '#8a6d3b' }; 
+        case 'In Progress': return { bg: '#cce5ff', text: '#31708f' }; 
+        default: return { bg: '#f9f9f9', text: '#666' };
     }
 };
 
 // --- 3. Mock Data with Coordinates and Details (EXPORTED) ---
-export const MOCK_PROJECTS = [
+export const MOCK_PROJECTS: Project[] = [
     { 
         id: 1, name: 'Downtown Bridge Renovation', status: 'In Progress', designer: 'Global Engineering SRL', location: 'Piața Unirii, Timișoara', description: 'Complete renovation of the historic downtown bridge including structural reinforcement and accessibility improvements.',
         lat: 45.7565, lng: 21.2290,
@@ -129,18 +127,17 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                         <h3 style={{ 
                             margin: 0, 
                             paddingBottom: '5px', 
-                            // Using longhand properties for H3 border
                             borderBottomWidth: '1px',
                             borderBottomStyle: 'solid',
-                            borderBottomColor: '#c7c7c7'
+                            borderBottomColor: '#c7c7c7',
+                            color:'#0b0530ff    ',
                         }}>
                             All Projects
                         </h3>
                         
-                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#666' }}>
+                        <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#0f043aff' }}>
                             {filteredProjects.length} projects found
                         </p>
-                        {/* HR line under project count */}
                         <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', margin: '0 0 15px 0' }} />
                     </div>
 
@@ -154,7 +151,7 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             style={{
-                                width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '8px', boxSizing: 'border-box', fontSize: '1em', backgroundColor: 'white',
+                                width: '100%', padding: '8px',color:'rgba(0, 0, 0, 0.88)', border: '1px solid #ccc', borderRadius: '8px', boxSizing: 'border-box', fontSize: '1em', backgroundColor: 'white',
                             }}
                         >
                             {STATUS_OPTIONS.map(status => (
@@ -169,7 +166,7 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                     <div style={searchContainerStyle}>
                         <input
                             type="text"
-                            placeholder="Search..." // Simplified placeholder
+                            placeholder="Search..." 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             style={inputStyle}
@@ -184,10 +181,9 @@ export default function ProjectList({ isOpen, onProjectClick }: ProjectListProps
                             return (
                                 <div 
                                     key={project.id}
-                                    // 🚨 ON CLICK: Trigger the modal in the parent component
+                                    // ON CLICK: Trigger the modal in the parent component
                                     onClick={() => onProjectClick(project)} 
                                     style={{ 
-                                        // Styling for the card container
                                         borderWidth: '1px', borderStyle: 'solid', borderColor: '#ddd', padding: '15px', marginBottom: '10px', backgroundColor: '#ffffff', 
                                         borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.08)', transition: 'transform 0.2s ease-in-out', 
                                         cursor: 'pointer', width: '100%', boxSizing: 'border-box'

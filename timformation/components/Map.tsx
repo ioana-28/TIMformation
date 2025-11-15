@@ -7,7 +7,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-l
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Import GeoJSON data 
+// Import GeoJSON data (Ensure this path is correct)
 import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
 
 
@@ -22,6 +22,7 @@ const MIN_ZOOM = 11;
 
 // --- Fix for default marker icons (ESSENTIAL for Next.js) ---
 delete (L.Icon.Default.prototype as any)._getIconUrl;
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -50,22 +51,32 @@ function MapResizeHandler({ isSidebarOpen }: ResizeHandlerProps) {
 }
 // ------------------------------------------
 
-// --- Types ---
-interface Project { id: number; name: string; status: string; designer: string; location: string; lat: number; lng: number; }
+// --- Types (Imported, but defined locally for context) ---
+interface Project { id: number; name: string; status: string; designer: string; location: string; lat: number; lng: number; description: string; }
+
 interface MapProps {
   center: [number, number]; zoom: number; projects: Project[]; isSidebarOpen: boolean; 
-  // NEW PROP
   openDetailsModal: (project: Project) => void; 
 }
 
+// Custom Pin Icon (Assuming pin_cladire.png is in the same directory as this file)
+import pinCladire from './pictures/pin_cladire.png'; 
+const customIcon = new L.Icon({
+    iconUrl: pinCladire.src,
+    iconSize: [80, 80], 
+    iconAnchor: [40, 80], 
+    popupAnchor: [0, -80] 
+});
+
 // 💥 ADJUSTED STYLE FOR LIGHTER BLUE, THINNER CONTOUR 💥
 const geoJsonStyle = {
-    color: "#2452a7ff",      
+    color: "#2452a7ff",      // Lighter Blue Accent
     weight: 2,             
     opacity: 1.0,          
     fillColor: "#2452a7ff",  
     fillOpacity: 0.12,       
 };
+
 const filterCityBoundary = (feature: any) => { return true; };
 // ------------------------------------------------
 
@@ -86,6 +97,7 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
     );
   }
 
+  // Render the MapContainer only when mounted
   return (
     <MapContainer 
       center={center} 
@@ -96,6 +108,7 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
       minZoom={MIN_ZOOM} 
       maxBoundsViscosity={0.9} 
     >
+      {/* Tile Layer: CartoDB Voyager */}
       <TileLayer
         attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
@@ -108,14 +121,18 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
 
       {/* Loop through the projects to create markers */}
       {projects.map(project => (
-        <Marker key={project.id} position={[project.lat, project.lng]}>
+        <Marker 
+          key={project.id} 
+          position={[project.lat, project.lng]} 
+          icon={customIcon} // Applied custom icon
+        >
           <Popup>
             <div style={{ maxWidth: '200px' }}>
               <h4 style={{ margin: '0 0 5px 0' }}>**{project.name}** ({project.status})</h4>
               <p style={{ margin: '5px 0' }}>**Locație:** {project.location}</p>
               <p style={{ margin: '5px 0' }}>**Proiectant:** {project.designer}</p>
               <button 
-                  onClick={() => openDetailsModal(project)} // 🚨 ON CLICK: Trigger the modal function
+                  onClick={() => openDetailsModal(project)} // Trigger modal function
                   style={{ 
                       padding: '5px 10px', backgroundColor: '#31708f', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
                   }}
