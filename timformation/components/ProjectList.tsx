@@ -75,28 +75,7 @@ const getStatusColor = (status: string) => {
 };
 
 // --- 3. Mock Data with Coordinates and Details (EXPORTED) ---
-export const MOCK_PROJECTS: Project[] = [
-    { 
-        id: 1, name: 'Downtown Bridge Renovation', status: 'In Progress', designer: 'Global Engineering SRL', location: 'Piața Unirii, Timișoara', description: 'Complete renovation of the historic downtown bridge including structural reinforcement and accessibility improvements.',
-        lat: 45.7565, lng: 21.2290,
-    },
-    { 
-        id: 2, name: 'Central Park Playground', status: 'Planning', designer: 'EcoDesign Proiect', location: 'Parcul Central, Bld. Victoriei', description: 'New modern playground with accessible equipment and safety surfacing.',
-        lat: 45.7530, lng: 21.2170,
-    },
-    { 
-        id: 3, name: 'Fifth Avenue Sidewalk Repairs', status: 'In Progress', designer: 'Construct TM Vest', location: 'Aleea 5-a, Cartier Nord', description: 'Repair and modernization of pedestrian walkways and accessibility ramps.',
-        lat: 45.7650, lng: 21.2250,
-    },
-    { 
-        id: 4, name: 'Timișoara Main Road Paving', status: 'In Progress', designer: 'Drumuri Moderne SA', location: 'Calea Șagului (Sector 3)', description: 'Full repaving and expansion of the main traffic artery.',
-        lat: 45.7350, lng: 21.2200,
-    },
-    { 
-        id: 5, name: 'New City Hall Annex', status: 'Completed', designer: 'Arhitectură & Spațiu', location: 'Str. Gării 1', description: 'Construction of a new administrative building.',
-        lat: 45.7600, lng: 21.2100,
-    },
-];
+
 
 // --- 4. Main Component ---
 export default function ProjectList({ isOpen, onProjectClick, projects, loading }: ProjectListProps) {

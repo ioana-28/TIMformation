@@ -19,7 +19,7 @@ interface ModalProps {
 // --- Style Definitions (Simplified for brevity) ---
 const modalBackdropStyle: React.CSSProperties = { /* ... (styles omitted for brevity) */ 
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 1000,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 2000,
     display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', 
 };
 const modalContentStyle: React.CSSProperties = { /* ... (styles omitted for brevity) */ 
@@ -71,9 +71,10 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
     return (
         <div style={modalBackdropStyle} onClick={onClose}>
             <div style={modalContentStyle} onClick={e => e.stopPropagation()}> 
+
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ margin: 0, color: '#130852ff' }}>{project.name}</h2>
+                    <h2 style={{ margin: 0, color: '#000000ff' }}>{project.title}</h2>
                     <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '1.5em', cursor: 'pointer', color: '#555' }}>
                         &times;
                     </button>

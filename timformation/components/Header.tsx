@@ -13,6 +13,7 @@ const goldman = Goldman({
   variable: '--font-goldman', 
 });
 
+
 interface HeaderProps {
     onMenuToggle: () => void;
     isOpen: boolean; 
@@ -67,13 +68,13 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
 
             {/* Left Side: Icon and Title */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                
-                <span 
+                { //remove hamburger
+                window.location.href == "http://localhost:3000/" && <span 
                     style={iconRotatedStyle} // Aplicare stil rotit
                     onClick={onMenuToggle}
                 >
                     ☰ 
-                </span> 
+                </span> }
                 
                 <Link 
                     href="/" 

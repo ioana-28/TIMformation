@@ -3,7 +3,6 @@
 'use client'; 
 import React, { useState } from 'react';
 import Header from '@/components/Header'; 
-import { MOCK_PROJECTS } from '@/components/ProjectList'; // <-- IMPORTĂ PROIECTELE
 
 // --- 1. Style Definitions ---
 const ACCENT_DARK_BLUE = '#130852ff'; 
@@ -109,11 +108,11 @@ export default function RequestPage() {
                                         <option value="">-- Selectați un proiect --</option>
                                         
                                         {/* 👇 AICI AFIȘĂM PROIECTELE DIN LISTĂ 👇 */}
-                                        {MOCK_PROJECTS.map((project) => (
+                                        {/* {MOCK_PROJECTS.map((project) => (
                                             <option key={project.id} value={project.name}>
                                                 {project.name} ({project.status})
                                             </option>
-                                        ))}
+                                        ))} */}
 
                                     </select>
                                 </div>

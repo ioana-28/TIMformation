@@ -2,8 +2,7 @@
 
 'use client'; 
 import dynamic from 'next/dynamic'; 
-import MainLayout from '@/components/mainLayout'; // ✅ Using capitalized alias
-import { MOCK_PROJECTS } from '@/components/ProjectList'; 
+import MainLayout from '@/components/mainLayout'; // ✅ Using capitalized alias 
 import React from 'react';
 
 // Define center coordinates (for starting in the center)
@@ -24,16 +23,7 @@ export default function Home() {
   return (
     // Use the capitalized JSX tag
     <MainLayout>
-      {/* Capture the state AND the new openDetailsModal function */}
-      {(isSidebarOpen: boolean, openDetailsModal: any) => (
-        <DynamicProjectMap 
-          center={TIMISOARA_CENTER} 
-          zoom={INITIAL_ZOOM} 
-          projects={MOCK_PROJECTS} 
-          isSidebarOpen={isSidebarOpen} 
-          openDetailsModal={openDetailsModal} 
-        />
-      )}
+      
     </MainLayout>
   );
 }

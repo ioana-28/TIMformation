@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import ProjectList from './ProjectList';
 import { createClient } from '@/libs/supabase/client';
+import ProjectDetailsModal from './ProjectDetailsModal'; 
 
 import type { Project } from './ProjectList';
 
@@ -11,11 +12,7 @@ import dynamic from 'next/dynamic';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
 
-'use client'; 
-import React, { useState } from 'react'; 
-import Header from './Header'; 
-import ProjectList, { Project, MOCK_PROJECTS } from './ProjectList'; // Import Project type and data
-import ProjectDetailsModal from './ProjectDetailsModal'; 
+
 
 // --- Style Definitions ---
 const pageContainerStyle: React.CSSProperties = {
@@ -37,14 +34,14 @@ const mapContainerStyle: React.CSSProperties = {
     transition: 'flex-grow 0.3s ease-in-out', 
 };
 
+
 // Define the children render prop type
-interface MainLayoutProps {
-    children: (isSidebarOpen: boolean, openDetailsModal: (project: Project) => void) => React.ReactNode; 
-}
+
 export default function MainLayout({ children }: { children?: React.ReactNode }) {
    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
    const [projects, setProjects] = useState<Project[]>([]);
    const [isLoading, setIsLoading] = useState(true);
+   const [selectedProject, setSelectedProject] = useState<Project | null >(null);
 
    const supabase = createClient();
 
@@ -66,21 +63,15 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           }
   
           fetchProjects();
-      }, []);
-
-export default function MainLayout({ children }: MainLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null); 
+      }, []); 
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
   
-  // Function to open the modal
   const openDetailsModal = (project: Project) => {
     // Ensures we pass the full project object including description
-    const fullProject = MOCK_PROJECTS.find(p => p.id === project.id) || project;
-    setSelectedProject(fullProject);
+    setSelectedProject(project);
   };
   
   // Function to close the modal
@@ -92,26 +83,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div style={pageContainerStyle}>
         <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
 
-        <div style={contentAreaStyle}>
-
-            <ProjectList isOpen={isSidebarOpen} onProjectClick={openDetailsModal} /> 
-
-            {/* Execute the children function, passing the state and the click handler */}
-            <div style={mapContainerStyle}>
-                {children(isSidebarOpen, openDetailsModal)} 
-            </div>
-            
-            {/* MODAL RENDERED HERE */}
-            {selectedProject && (
-                <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
-            )}
-
       <div style={contentAreaStyle}>
-        <ProjectList isOpen={isSidebarOpen} projects={projects} loading={isLoading}/>
+        <ProjectList isOpen={isSidebarOpen} projects={projects} loading={isLoading} onProjectClick={openDetailsModal} />
+         {selectedProject && (
+                 <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
+             )}
         <div style={mapContainerStyle}>
-          <Map center={[45.7560, 21.2310]} zoom={13} projects={projects} loading={isLoading} />
+          <Map center={[45.7560, 21.2310]} zoom={13} projects={projects} loading={isLoading} openDetailsModal={openDetailsModal} isSidebarOpen={isSidebarOpen}  />
           {children}
         </div>
+    </div>
     </div>
   );
 
