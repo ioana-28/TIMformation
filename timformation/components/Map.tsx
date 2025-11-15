@@ -8,8 +8,17 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Project } from './ProjectList';
 
-// Import GeoJSON data (THIS FILE MUST CONTAIN THE COMPLEX OSM DATA)
+// Import GeoJSON data (Ensure this path is correct)
 import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
+
+
+// --- 1. Map View Constraints ---
+const MAX_BOUNDS: [[number, number], [number, number]] = [
+  [45.68, 21.05], // SW Corner
+  [45.85, 21.40], // NE Corner
+];
+const MIN_ZOOM = 11; 
+// ------------------------------
 
 
 // --- Fix for default marker icons (ESSENTIAL for Next.js) ---
@@ -25,42 +34,61 @@ L.Icon.Default.mergeOptions({
 // --- Helper Component to Force Map Redraw (Performance Fix) ---
 function MapInvalidator() {
   const map = useMap(); 
-
-  useEffect(() => {
-    map.invalidateSize();
-  }, [map]); 
-
+  useEffect(() => { map.invalidateSize(); }, [map]); 
   return null; 
+}
+
+// --- Helper Component to Handle Sidebar Resizing (Fixes gray area) ---
+interface ResizeHandlerProps { isSidebarOpen: boolean; }
+function MapResizeHandler({ isSidebarOpen }: ResizeHandlerProps) {
+    const map = useMap(); 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            map.invalidateSize();
+        }, 350); 
+        return () => clearTimeout(timer);
+    }, [isSidebarOpen, map]); 
+    return null; 
 }
 // ------------------------------------------
 
-// --- Types ---
-
 interface MapProps {
-  center: [number, number]; 
-  zoom: number;
-  projects: Project[]; 
-  loading: boolean;
+  center: [number, number]; zoom: number; projects: Project[]; isSidebarOpen: boolean;  loading: boolean;
+  openDetailsModal: (project: Project) => void; 
 }
 
-// 💥 ADJUSTED STYLE: Navy Blue (Header color) and THINNER LINE (weight: 2) 💥
+// Custom Pin Icon (Assuming pin_cladire.png is in the same directory as this file)
+import pinCladire from './pictures/pin_cladire.png'; 
+const customIcon = new L.Icon({
+    iconUrl: pinCladire.src,
+    iconSize: [80, 80], 
+    iconAnchor: [40, 80], 
+    popupAnchor: [0, -80] 
+});
+
+// 💥 ADJUSTED STYLE FOR LIGHTER BLUE, THINNER CONTOUR 💥
 const geoJsonStyle = {
-    color: "#739cc0ff",      // Navy Blue
-    weight: 2,             // 🛠️ CHANGED: Reduced thickness to 2
-    opacity: 1.0,          // Fully opaque line
-    fillColor: "#130852ff",  
-    fillOpacity: 0.08,     // Light fill
+    color: "#2452a7ff",      // Lighter Blue Accent
+    weight: 2,             
+    opacity: 1.0,          
+    fillColor: "#2452a7ff",  
+    fillOpacity: 0.12,       
 };
 
-// ------------------------------------------------
+const filterCityBoundary = (feature: any) => { 
+    // Check if the feature has geometry
+    if (!feature.geometry) {
+        return false;
+    }
 
-// --- Filter Function (Kept intact to allow the boundary to draw) ---
-const filterCityBoundary = (feature: any) => {
-    return true; 
+    const geometryType = feature.geometry.type;
+
+    // Only allow drawing Polygons and MultiPolygons (the boundaries).
+    // Exclude 'Point' (the administrative center node)
+    return geometryType === 'MultiPolygon' || geometryType === 'Polygon';
 };
-// ------------------------------------------------
 
-export default function ProjectMap({ center, zoom, projects, loading }: MapProps) {
+export default function ProjectMap({ center, zoom, projects, isSidebarOpen, openDetailsModal, loading }: MapProps) {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -70,14 +98,7 @@ export default function ProjectMap({ center, zoom, projects, loading }: MapProps
   if (!hasMounted) {
     return (
         <div 
-            style={{ 
-                height: '100%', 
-                width: '100%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                backgroundColor: '#f4f4f4' 
-            }}
+            style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f4f4f4' }}
         >
             Harta se încarcă... (Așteaptă montarea client-side)
         </div>
@@ -90,7 +111,10 @@ export default function ProjectMap({ center, zoom, projects, loading }: MapProps
       center={center} 
       zoom={zoom} 
       scrollWheelZoom={true} 
-      style={{ height: '100%', width: '100%' }} // Critical dimensions
+      style={{ height: '100%', width: '100%' }}
+      maxBounds={MAX_BOUNDS}
+      minZoom={MIN_ZOOM} 
+      maxBoundsViscosity={0.9} 
     >
       {/* Tile Layer: CartoDB Voyager */}
       <TileLayer
@@ -98,10 +122,9 @@ export default function ProjectMap({ center, zoom, projects, loading }: MapProps
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
 
-      {/* Integrate the performance fix */}
       <MapInvalidator /> 
+      <MapResizeHandler isSidebarOpen={isSidebarOpen} /> 
 
-      {/* GeoJSON Layer for City Contour (Navy and Thinner) */}
       <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} filter={filterCityBoundary} />
 
       {/* Loop through the projects to create markers */}
@@ -115,20 +138,18 @@ export default function ProjectMap({ center, zoom, projects, loading }: MapProps
           <Marker 
             key={project.id} 
             position={[project.latitude, project.longitude]} 
+            icon={customIcon}
           >
             <Popup>
               <div style={{ maxWidth: '200px' }}>
                 <h4 style={{ margin: '0 0 5px 0' }}>{project.title} ({project.status})</h4>
                 <p style={{ margin: '5px 0' }}><strong>Locație:</strong> {project.location}</p>
                 <p style={{ margin: '5px 0' }}><strong>Proiectant:</strong> {project.designer}</p>
-                <button style={{ 
-                    padding: '5px 10px', 
-                    backgroundColor: '#31708f', 
-                    color: 'white', 
-                    border: 'none', 
-                    borderRadius: '4px',
-                    marginTop: '10px'
-                }}>
+                 <button 
+                    onClick={() => openDetailsModal(project)} // Trigger modal function
+                    style={{ 
+                      padding: '5px 10px', backgroundColor: '#132186ff', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
+                    }}>
                   Vezi Detalii
                 </button>
               </div>

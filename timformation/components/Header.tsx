@@ -96,15 +96,12 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
                 <Link href="/request" style={linkStyle}>
                     Send Request
                 </Link>
-                <Link href="/chat" style={linkStyle}>
-                    Chat
-                </Link>
-                <Link href="/vote" style={linkStyle}>
-                    Vote
+                <Link href="/Q&A" style={linkStyle}>
+                    Q&A
                 </Link>
                 
-                {/* Profile Icon Placeholder (Folosim culoarea linkStyle) */}
-                <span style={{ ...linkStyle, marginLeft: '30px' }}>Log In</span> 
+                
+                
             </nav>
         </header>
     );

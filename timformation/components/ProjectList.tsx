@@ -29,6 +29,7 @@ export interface Project {
 
 interface ProjectListProps {
     isOpen: boolean; 
+    onProjectClick: (project: Project) => void; 
     projects: Project[];
     loading: boolean;
 }
@@ -36,11 +37,9 @@ interface ProjectListProps {
 
 // --- 1. Constants and Style Definitions ---
 const listContainerBaseStyle: React.CSSProperties = {
-    // Neutral base background
     backgroundColor: '#f7f7f7', 
     height: '100%',
     overflowY: 'auto', 
-    
     transition: 'width 0.3s ease-in-out, min-width 0.3s ease-in-out, padding 0.3s ease-in-out',
 };
 
@@ -55,9 +54,10 @@ const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px',
     border: '1px solid #ccc', 
-    borderRadius: '8px', // Rounded
+    borderRadius: '8px', 
     boxSizing: 'border-box', 
     fontSize: '1em',
+    color: '#0e0226ff',
 };
 
 const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
@@ -67,73 +67,39 @@ const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
 // --- 2. Coordinated Color Helpers ---
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'Completed':
-            return { bg: '#dcf8e5', text: '#3c763d' }; // Light Green / Success
-        case 'Planning':
-            return { bg: '#f0e0d0', text: '#8a6d3b' }; // Light Warm Yellow / Warning
-        case 'In Progress':
-            return { bg: '#cce5ff', text: '#31708f' }; // Light Blue / Active
-        default:
-            return { bg: '#f9f9f9', text: '#666' };
+        case 'Completed': return { bg: '#dcf8e5', text: '#3c763d' }; 
+        case 'Planning': return { bg: '#f0e0d0', text: '#8a6d3b' }; 
+        case 'In Progress': return { bg: '#cce5ff', text: '#31708f' }; 
+        default: return { bg: '#f9f9f9', text: '#666' };
     }
 };
 
-// --- 3. Mock Data with Coordinates and Details ---
-export const MOCK_PROJECTS = [
+// --- 3. Mock Data with Coordinates and Details (EXPORTED) ---
+export const MOCK_PROJECTS: Project[] = [
     { 
-        id: 1, 
-        name: 'Downtown Bridge Renovation', 
-        status: 'In Progress',
-        designer: 'Global Engineering SRL',
-        location: 'Piața Unirii, Timișoara',
-        description: 'Complete renovation of the historic downtown bridge...',
-        lat: 45.7565, 
-        lng: 21.2290,
+        id: 1, name: 'Downtown Bridge Renovation', status: 'In Progress', designer: 'Global Engineering SRL', location: 'Piața Unirii, Timișoara', description: 'Complete renovation of the historic downtown bridge including structural reinforcement and accessibility improvements.',
+        lat: 45.7565, lng: 21.2290,
     },
     { 
-        id: 2, 
-        name: 'Central Park Playground', 
-        status: 'Planning',
-        designer: 'EcoDesign Proiect',
-        location: 'Parcul Central, Bld. Victoriei',
-        description: 'New modern playground...',
-        lat: 45.7530, 
-        lng: 21.2170,
+        id: 2, name: 'Central Park Playground', status: 'Planning', designer: 'EcoDesign Proiect', location: 'Parcul Central, Bld. Victoriei', description: 'New modern playground with accessible equipment and safety surfacing.',
+        lat: 45.7530, lng: 21.2170,
     },
     { 
-        id: 3, 
-        name: 'Fifth Avenue Sidewalk Repairs', 
-        status: 'In Progress',
-        designer: 'Construct TM Vest',
-        location: 'Aleea 5-a, Cartier Nord',
-        description: 'Repair and modernization of pedestrian walkways...',
-        lat: 45.7650, 
-        lng: 21.2250,
+        id: 3, name: 'Fifth Avenue Sidewalk Repairs', status: 'In Progress', designer: 'Construct TM Vest', location: 'Aleea 5-a, Cartier Nord', description: 'Repair and modernization of pedestrian walkways and accessibility ramps.',
+        lat: 45.7650, lng: 21.2250,
     },
     { 
-        id: 4, 
-        name: 'Timișoara Main Road Paving', 
-        status: 'In Progress',
-        designer: 'Drumuri Moderne SA',
-        location: 'Calea Șagului (Sector 3)',
-        description: 'Full repaving and expansion of the main traffic artery.',
-        lat: 45.7350, 
-        lng: 21.2200,
+        id: 4, name: 'Timișoara Main Road Paving', status: 'In Progress', designer: 'Drumuri Moderne SA', location: 'Calea Șagului (Sector 3)', description: 'Full repaving and expansion of the main traffic artery.',
+        lat: 45.7350, lng: 21.2200,
     },
     { 
-        id: 5, 
-        name: 'New City Hall Annex', 
-        status: 'Completed',
-        designer: 'Arhitectură & Spațiu',
-        location: 'Str. Gării 1',
-        description: 'Construction of a new administrative building.',
-        lat: 45.7600, 
-        lng: 21.2100,
+        id: 5, name: 'New City Hall Annex', status: 'Completed', designer: 'Arhitectură & Spațiu', location: 'Str. Gării 1', description: 'Construction of a new administrative building.',
+        lat: 45.7600, lng: 21.2100,
     },
 ];
 
 // --- 4. Main Component ---
-export default function ProjectList({ isOpen, projects, loading }: ProjectListProps) {
+export default function ProjectList({ isOpen, onProjectClick, projects, loading }: ProjectListProps) {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -161,7 +127,6 @@ export default function ProjectList({ isOpen, projects, loading }: ProjectListPr
     const finalContainerStyle: React.CSSProperties = {
         ...listContainerBaseStyle,
         
-        // Toggling width for collapse animation
         width: isOpen ? '350px' : '0',
         minWidth: isOpen ? '350px' : '0',
         padding: isOpen ? '15px 10px' : '0',
@@ -237,6 +202,7 @@ export default function ProjectList({ isOpen, projects, loading }: ProjectListPr
                         return (
                             <div 
                                 key={project.id}
+                                onClick={() => onProjectClick(project)} 
                                 style={{ 
                                         // Rounded card styling
                                     border: '1px solid #ddd', 
@@ -270,7 +236,14 @@ export default function ProjectList({ isOpen, projects, loading }: ProjectListPr
                                         {project.status}
                                 </span>
 
-                                <hr style={{ borderTop: '1px dashed #eee', margin: '10px 0' }} />
+                                    {/* Separator line (Fixed style conflict) */}
+                                    <hr 
+                                        style={{ 
+                                            border: 'none', 
+                                            borderTop: '1px dashed #eee', 
+                                            margin: '10px 0' 
+                                        }} 
+                                    />
 
                                 {/* Proiectant */}
                                 <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
@@ -281,11 +254,11 @@ export default function ProjectList({ isOpen, projects, loading }: ProjectListPr
                                     <span style={{ fontWeight: 'bold', color: '#555' }}>Locație:</span> {project.location}
                                 </p>
                                     
-                                {/* Description */}
-                                <p style={{ margin: '10px 0 0 0', fontSize: '0.9em', color: '#666' }}>
-                                    {project.description}
-                                </p>
-                            </div>
+                                    {/* Description (short) */}
+                                    <p style={{ margin: '10px 0 0 0', fontSize: '0.9em', color: '#666' }}>
+                                        {project.description}
+                                    </p>
+                                </div>
                             );
                         })}
                     {filteredProjects.length === 0 && (
