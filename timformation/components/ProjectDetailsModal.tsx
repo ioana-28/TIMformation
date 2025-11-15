@@ -1,7 +1,7 @@
 // timformation/components/ProjectDetailsModal.tsx
 
 import React, { useState } from 'react';
-import { Project } from './ProjectList'; // Import the unified Project type
+import { Project } from '../libs/ProjectList'; // Import the unified Project type
 
 // Define the Comment type (for local state)
 interface Comment {
