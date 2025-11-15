@@ -2,6 +2,7 @@
 
 'use client'; 
 
+import { createClient } from '@/libs/supabase/client';
 import { useState } from 'react';
 import React from 'react'; 
 
@@ -51,6 +52,7 @@ const MOCK_PROJECTS = [
 
 
 export default function ProjectList({ isOpen }: ProjectListProps) {
+
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredProjects = MOCK_PROJECTS.filter(project =>
