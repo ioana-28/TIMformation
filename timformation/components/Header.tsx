@@ -1,9 +1,8 @@
-// timformation/components/Header.tsx
+'use client';
 
 import Link from 'next/link';
 import React from 'react';
-
-// 1. DEFINIREA FONTULUI GOLDMAN (Singurul necesar)
+import { User, SupabaseClient } from '@supabase/supabase-js';
 import { Goldman } from 'next/font/google';
 
 const goldman = Goldman({
@@ -13,61 +12,44 @@ const goldman = Goldman({
   variable: '--font-goldman', 
 });
 
-
 interface HeaderProps {
-    onMenuToggle: () => void;
-    isOpen: boolean; 
-    // Redundant 'isOpen' definition REMOVED
+  onMenuToggle: () => void;
+  isOpen: boolean;
+  user?: User | null;               // 🔹 primim user
+  supabase?: SupabaseClient;        // 🔹 primim supabase ca să putem da logout
 }
 
-// 2. STILURILE PENTRU HEADER (Definiții duplicate REZOLVATE)
 const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 20px',
-    // Am păstrat doar una dintre definițiile de culoare:
-    backgroundColor: '#08205b', 
-    borderBottom: '1px solid #2452a7ff',
-    boxShadow: '0 2px 4px rgba(16, 136, 60, 0.05)',
-    height: '60px', 
-    // APLICARE FONT: Goldman pentru toate elementele din header
-    fontFamily: 'var(--font-goldman), sans-serif', 
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '10px 20px',
+  backgroundColor: '#08205b', 
+  borderBottom: '1px solid #2452a7ff',
+  boxShadow: '0 2px 4px rgba(16, 136, 60, 0.05)',
+  height: '60px', 
+  fontFamily: 'var(--font-goldman), sans-serif', 
 };
 
-// 3. STILURILE PENTRU LINK-URI (Definiții duplicate REZOLVATE)
 const linkStyle: React.CSSProperties = {
-    marginLeft: '20px',
-    textDecoration: 'none',
-    // Am păstrat doar una dintre definițiile de culoare:
-    color: '#d0e4ff',
-    fontSize: '1em',
-    // Nu mai este necesară aplicarea explicită a fontFamily aici, moștenește de la headerStyle.
+  marginLeft: '20px',
+  textDecoration: 'none',
+  color: '#d0e4ff',
+  fontSize: '1em',
 };
 
-// 4. STILURILE PENTRU ICON (Cu culoare unificată)
-const iconBaseStyle: React.CSSProperties = {
-    fontSize: '1.5em', 
-    cursor: 'pointer', 
-    marginRight: '15px',
-    color: '#f4ece4ff', // Culoare deschisă unificată
-    transition: 'transform 0.3s ease-in-out', 
-};
+export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderProps) {
 
-export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
+  const handleLogout = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+      // ⚡️ nu mai trebuie redirect, MainLayout va reseta user la null
+    }
+  };
 
-    // 5. STILUL ROTIT (Definiție duplicată REZOLVATĂ)
-    const iconRotatedStyle: React.CSSProperties = {
-        ...iconBaseStyle,
-        transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', 
-    };
-
-    return (
-        // 6. ADĂUGARE CLASĂ FONT: Clasa este adăugată pentru a face variabila CSS disponibilă
-        <header style={headerStyle} className={goldman.variable}>
-
-            {/* Left Side: Icon and Title */}
-            <div style={{ display: 'flex', alignItems: 'center' }}>
+  return (
+    <header style={headerStyle} className={goldman.variable}>
+       <div style={{ display: 'flex', alignItems: 'center' }}>
                 <span 
                     style={iconRotatedStyle} // Aplicare stil rotit
                     onClick={onMenuToggle}
@@ -90,19 +72,28 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
                 </Link>
             </div>
 
-
-            {/* Right Side: Navigation Links */}
-            <nav style={{ display: 'flex' }}>
-                <Link href="/request" style={linkStyle}>
-                    Send Request
-                </Link>
-                <Link href="/Q&A" style={linkStyle}>
-                    Q&A
-                </Link>
-                
-                
-                
-            </nav>
-        </header>
+      <nav style={{ display: 'flex', alignItems: 'center' }}>
+        {user ? (
+          <>
+            <span style={{ color: '#87b7ff', marginRight: '15px' }}>{user.email}</span>
+            <button
+              onClick={handleLogout}
+              style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#2452a7', color: '#f4ece4ff', cursor: 'pointer' }}
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" style={linkStyle}>Login</Link>
+            <Link href="/register" style={linkStyle}>Register</Link>
+          </>
+        )}
+      </nav>
+    </header>
     );
+         
+           
+
 }
+
