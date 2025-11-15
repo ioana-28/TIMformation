@@ -68,13 +68,12 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
 
             {/* Left Side: Icon and Title */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                { //remove hamburger
-                window.location.href == "http://localhost:3000/" && <span 
+                <span 
                     style={iconRotatedStyle} // Aplicare stil rotit
                     onClick={onMenuToggle}
                 >
                     ☰ 
-                </span> }
+                </span>
                 
                 <Link 
                     href="/" 
