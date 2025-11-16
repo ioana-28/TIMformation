@@ -12,7 +12,7 @@ import { User } from '@supabase/supabase-js';
 import dynamic from 'next/dynamic';
 
 // Dynamic Map Import: Uses MapComponent name
-const MapComponent = dynamic(() => import('./Map'), { ssr: false }); 
+const Map = dynamic(() => import('./Map'), { ssr: false }); 
 
 
 // --- Style Definitions (Rămân neschimbate) ---
@@ -140,5 +140,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           <Map center={[45.7560, 21.2310]} zoom={13} projects={filteredProjects} loading={isLoading} openDetailsModal={openDetailsModal} isSidebarOpen={isSidebarOpen}  />
           {children}
         </div>
+      </div>     
+    </div>
     );
-}
+  }

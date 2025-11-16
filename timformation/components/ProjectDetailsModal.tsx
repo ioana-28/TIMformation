@@ -5,6 +5,8 @@ import { Project } from './ProjectList'; // Import the unified Project type
 import { createClient } from '@/libs/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
+import { Montserrat } from 'next/font/google'; 
+
 // Define the Comment type (for local state)
 interface Comment {
     id: number;
@@ -13,8 +15,8 @@ interface Comment {
     author_name: string;
     content: string;
     created_at: string;
+}
 
-import { Montserrat } from 'next/font/google'; 
 
 const montserrat = Montserrat({
     subsets: ['latin'],
@@ -22,10 +24,6 @@ const montserrat = Montserrat({
     weight: ['400', '700', '900'], 
     variable: '--font-montserrat', 
 });
-
-
-// Define the Comment type (for local state)
-}
 
 interface ModalProps {
     project: Project; onClose: () => void;
@@ -350,12 +348,12 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                             {comments.map(comment => (
                                 <div key={comment.id} style={{ borderBottom: '1px dotted #88aadd', padding: '15px 0' }}>
                                     <p style={{ margin: '0 0 5px 0' }}>
-                                        <strong style={{ color: '#c0d6ff' }}>{comment.user}</strong> 
+                                        <strong style={{ color: '#c0d6ff' }}>{comment.author_name}</strong> 
                                         <span style={{ fontSize: '0.8em', color: '#c0d6ff', marginLeft: '10px' }}>
-                                            — {comment.date}
+                                            — {comment.created_at}
                                         </span>
                                     </p>
-                                    <p style={{ margin: 0, color: '#f0f4ff' }}>{comment.text}</p>
+                                    <p style={{ margin: 0, color: '#f0f4ff' }}>{comment.content}</p>
                                 </div>
                             ))}
                             {comments.length === 0 && <p style={{ color: '#c0d6ff' }}>Fii primul care comentează acest proiect!</p>}
