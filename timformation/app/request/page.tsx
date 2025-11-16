@@ -102,21 +102,7 @@ export default function RequestPage() {
                                     <input type="text" id="subject" style={inputStyle} placeholder="ex: Solicitare documentație proiect Pod Central" required />
                                 </div>
                                 
-                                <div style={inputGroupStyle}>
-                                    <label htmlFor="project" style={labelStyle}>Proiect vizat (Opțional):</label>
-                                    <select id="project" style={{ ...inputStyle, appearance: 'none' }}>
-                                        <option value="">-- Selectați un proiect --</option>
-                                        
-                                        {/* 👇 AICI AFIȘĂM PROIECTELE DIN LISTĂ 👇 */}
-                                        {/* {MOCK_PROJECTS.map((project) => (
-                                            <option key={project.id} value={project.name}>
-                                                {project.name} ({project.status})
-                                            </option>
-                                        ))} */}
-
-                                    </select>
-                                </div>
-
+                                
                                 <div style={inputGroupStyle}>
                                     <label htmlFor="message" style={labelStyle}>Mesajul dumneavoastră:</label>
                                     <textarea id="message" style={{ ...inputStyle, minHeight: '150px' }} required />
