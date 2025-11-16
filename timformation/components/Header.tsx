@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React from 'react';
+import { User, SupabaseClient } from '@supabase/supabase-js';
 
 // 1. DEFINIREA FONTULUI GOLDMAN (Singurul necesar)
 import { Goldman } from 'next/font/google';
@@ -17,7 +18,8 @@ const goldman = Goldman({
 interface HeaderProps {
     onMenuToggle: () => void;
     isOpen: boolean; 
-    // Redundant 'isOpen' definition REMOVED
+    user?: User | null;            
+    supabase?: SupabaseClient; 
 }
 
 // 2. STILURILE PENTRU HEADER (Definiții duplicate REZOLVATE)
@@ -54,7 +56,14 @@ const iconBaseStyle: React.CSSProperties = {
     transition: 'transform 0.3s ease-in-out', 
 };
 
-export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
+export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderProps) {
+
+    const handleLogout = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    
+    }
+  };
 
     // 5. STILUL ROTIT (Definiție duplicată REZOLVATĂ)
     const iconRotatedStyle: React.CSSProperties = {
@@ -63,10 +72,8 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
     };
 
     return (
-        // 6. ADĂUGARE CLASĂ FONT: Clasa este adăugată pentru a face variabila CSS disponibilă
         <header style={headerStyle} className={goldman.variable}>
 
-            {/* Left Side: Icon and Title */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
                 <span 
                     style={iconRotatedStyle} // Aplicare stil rotit
@@ -80,7 +87,6 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
                     style={{ 
                         textDecoration: 'none', 
                         fontFamily: 'var(--font-goldman), sans-serif', // Aplicare explicită pentru titlu
-                        // Am ales o culoare deschisă pentru a contrasta cu fundalul închis
                         color: '#f4ece4ff', 
                         fontSize: '1.4em', 
                         fontWeight: 'bold' 
@@ -93,6 +99,22 @@ export default function Header({ onMenuToggle, isOpen }: HeaderProps) {
 
             {/* Right Side: Navigation Links */}
             <nav style={{ display: 'flex' }}>
+                {user ? (
+                    <>
+                        <span style={{ color: '#87b7ff', marginRight: '15px' }}>{user.email}</span>
+                        <button
+                        onClick={handleLogout}
+                        style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#2452a7', color: '#f4ece4ff', cursor: 'pointer' }}
+                        >
+                        Logout
+                        </button>
+                    </>
+                    ) : (
+                    <>
+                        <Link href="/login" style={linkStyle}>Login</Link>
+                        <Link href="/register" style={linkStyle}>Register</Link>
+                    </>
+                )}
                 <Link href="/request" style={linkStyle}>
                     Send Request
                 </Link>

@@ -8,6 +8,8 @@ import ProjectDetailsModal from './ProjectDetailsModal';
 
 import type { Project } from './ProjectList';
 
+import { User } from '@supabase/supabase-js';
+
 import dynamic from 'next/dynamic';
 
 const Map = dynamic(() => import('./Map'), { ssr: false });
@@ -42,8 +44,19 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
    const [projects, setProjects] = useState<Project[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [selectedProject, setSelectedProject] = useState<Project | null >(null);
+   const [user, setUser] = useState<User | null>(null);
 
    const supabase = createClient();
+
+   useEffect(() => {
+    const sessionUser = supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
 
   useEffect(() => {
@@ -81,7 +94,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
   
   return (
     <div style={pageContainerStyle}>
-        <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
+        <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} user={user} supabase={supabase} /> 
 
       <div style={contentAreaStyle}>
         <ProjectList isOpen={isSidebarOpen} projects={projects} loading={isLoading} onProjectClick={openDetailsModal} />
