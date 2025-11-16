@@ -226,6 +226,7 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                             className={montserrat.className} 
                             style={{ 
                                 margin: 0, 
+                                padding: 10,
                                 // 🛠️ FIX 2: Aplică culoarea accentului pentru titlu (Navy)
                                 color: ACCENT_DARK_BLUE, 
                                 fontSize: '1.9em', 
