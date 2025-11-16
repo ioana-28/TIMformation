@@ -1,5 +1,3 @@
-// timformation/components/Header.tsx
-
 import Link from 'next/link';
 import React from 'react';
 import { User, SupabaseClient } from '@supabase/supabase-js';
@@ -42,6 +40,17 @@ const linkStyle: React.CSSProperties = {
     fontSize: '1em',
 };
 
+const adminButtonStyle: React.CSSProperties = {
+  marginLeft: '20px',
+  padding: '5px 10px',
+  backgroundColor: '#f4ece4ff',
+  color: '#08205b',
+  borderRadius: '4px',
+  textDecoration: 'none',
+  fontWeight: 'bold',
+  transition: 'background 0.3s',
+};    
+    
 const iconBaseStyle: React.CSSProperties = {
     fontSize: '1.5em', 
     cursor: 'pointer', 
@@ -115,8 +124,8 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
                 <Link href="/request" style={linkStyle}>
                     Send Request
                 </Link>
-                <Link href="/Q&A" style={linkStyle}>
-                    Q&A
+                <Link href="/admin" style={adminButtonStyle}>
+                  Admin
                 </Link>
             </nav>
 
