@@ -1,46 +1,64 @@
+// timformation/components/ProjectMap.tsx
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, GeoJSON } from 'react-leaflet'; 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import type { Project } from '../libs/ProjectList';
-import timisoaraBoundary from '../src/data/timisoaraBorder.json';
-import { User } from '@supabase/supabase-js';
-import { createClient } from '@/libs/supabase/client';
-import pinCladire from './pictures/pin_cladire.png';
+import type { Project } from './ProjectList';
 
-// --- Map Settings ---
+// Import GeoJSON data (Ensure this path is correct)
+import timisoaraBoundary from '../src/data/timisoaraBorder.json'; 
+
+
+// --- 1. Map View Constraints ---
 const MAX_BOUNDS: [[number, number], [number, number]] = [
-  [45.68, 21.05],
-  [45.85, 21.40],
+  [45.68, 21.05], // SW Corner
+  [45.85, 21.40], // NE Corner
 ];
-const MIN_ZOOM = 11;
+const MIN_ZOOM = 11; 
+// ------------------------------
 
-// --- Fix Leaflet markers ---
+
+// --- Fix for default marker icons (ESSENTIAL for Next.js) ---
 delete (L.Icon.Default.prototype as any)._getIconUrl;
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
+// ------------------------------------------------
 
-// --- Helper Components ---
+// --- Helper Component to Force Map Redraw (Performance Fix) ---
 function MapInvalidator() {
   const map = useMap(); 
   useEffect(() => { map.invalidateSize(); }, [map]); 
   return null; 
 }
-function MapResizeHandler({ isSidebarOpen }: { isSidebarOpen: boolean }) {
-  const map = useMap(); 
-  useEffect(() => {
-      const timer = setTimeout(() => { map.invalidateSize(); }, 350);
-      return () => clearTimeout(timer);
-  }, [isSidebarOpen, map]); 
-  return null; 
+
+// --- Helper Component to Handle Sidebar Resizing (Fixes gray area) ---
+interface ResizeHandlerProps { isSidebarOpen: boolean; }
+function MapResizeHandler({ isSidebarOpen }: ResizeHandlerProps) {
+    const map = useMap(); 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            map.invalidateSize();
+        }, 350); 
+        return () => clearTimeout(timer);
+    }, [isSidebarOpen, map]); 
+    return null; 
+}
+// ------------------------------------------
+
+interface MapProps {
+  center: [number, number]; zoom: number; projects: Project[]; isSidebarOpen: boolean;  loading: boolean;
+  openDetailsModal: (project: Project) => void; 
 }
 
-// --- Custom Pin ---
+// Custom Pin Icon (Assuming pin_cladire.png is in the same directory as this file)
+import pinCladire from './pictures/pin_cladire.png'; 
 const customIcon = new L.Icon({
     iconUrl: pinCladire.src,
     iconSize: [80, 80], 
@@ -48,147 +66,98 @@ const customIcon = new L.Icon({
     popupAnchor: [0, -80] 
 });
 
-// --- GeoJSON Style ---
+// 💥 ADJUSTED STYLE FOR LIGHTER BLUE, THINNER CONTOUR 💥
 const geoJsonStyle = {
-    color: "#2452a7ff",
-    weight: 2,
-    opacity: 1,
-    fillColor: "#2452a7ff",
-    fillOpacity: 0.12,
+    color: "#2452a7ff",      // Lighter Blue Accent
+    weight: 2,             
+    opacity: 1.0,          
+    fillColor: "#2452a7ff",  
+    fillOpacity: 0.12,       
 };
 
-// --- Props ---
-interface MapProps {
-  center: [number, number];
-  zoom: number;
-  projects: Project[];
-  isSidebarOpen: boolean;
-  loading: boolean;
-  openDetailsModal: (project: Project) => void;
-  user?: User | null;
-}
+const filterCityBoundary = (feature: any) => { 
+    // Check if the feature has geometry
+    if (!feature.geometry) {
+        return false;
+    }
 
-// --- Component ---
-export default function ProjectMap({ center, zoom, projects, isSidebarOpen, loading, openDetailsModal, user }: MapProps) {
+    const geometryType = feature.geometry.type;
+
+    // Only allow drawing Polygons and MultiPolygons (the boundaries).
+    // Exclude 'Point' (the administrative center node)
+    return geometryType === 'MultiPolygon' || geometryType === 'Polygon';
+};
+
+export default function ProjectMap({ center, zoom, projects, isSidebarOpen, openDetailsModal, loading }: MapProps) {
   const [hasMounted, setHasMounted] = useState(false);
-  const [comments, setComments] = useState<{[projectId: string]: Array<{user_email: string, text: string}>}>({});
-  const [newComment, setNewComment] = useState("");
-  const supabase = createClient();
 
-  useEffect(() => { setHasMounted(true); }, [loading]);
-
-  // Fetch comments from Supabase on mount
   useEffect(() => {
-    async function fetchComments() {
-      const { data } = await supabase.from('comments').select('*');
-      if (data) {
-        const grouped: {[projectId: string]: Array<{user_email: string, text: string}>} = {};
-        data.forEach(c => {
-          const pid = c.project_id;
-          if (!grouped[pid]) grouped[pid] = [];
-          grouped[pid].push({user_email: c.user_email, text: c.text});
-        });
-        setComments(grouped);
-      }
-    }
-    fetchComments();
-  }, [supabase]);
-
-  const handleAddComment = async (projectId: number) => {
-    if (!newComment.trim() || !user) return;
-
-    const commentObj = { project_id: projectId, user_email: user.email, text: newComment };
-
-    // Save in Supabase
-    const { error } = await supabase.from('comments').insert([commentObj]);
-    if (error) {
-      console.error("Eroare la salvarea comentariului:", error.message);
-      return;
-    }
-
-    // Update UI imediat
-    setComments(prev => ({
-      ...prev,
-      [projectId]: [...(prev[projectId] || []), { user_email: user.email, text: newComment }]
-    }));
-    setNewComment("");
-  };
+    setHasMounted(true);
+  }, [loading]);
 
   if (!hasMounted) {
     return (
-      <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f4f4f4' }}>
-        Harta se încarcă...
-      </div>
+        <div 
+            style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f4f4f4' }}
+        >
+            Harta se încarcă... (Așteaptă montarea client-side)
+        </div>
     );
   }
 
+  // Render the MapContainer only when mounted
   return (
     <MapContainer 
       center={center} 
       zoom={zoom} 
-      scrollWheelZoom
+      scrollWheelZoom={true} 
       style={{ height: '100%', width: '100%' }}
       maxBounds={MAX_BOUNDS}
       minZoom={MIN_ZOOM} 
-      maxBoundsViscosity={0.9}
+      maxBoundsViscosity={0.9} 
     >
+      {/* Tile Layer: CartoDB Voyager */}
       <TileLayer
         attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
-      <MapInvalidator />
-      <MapResizeHandler isSidebarOpen={isSidebarOpen} />
-      <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} />
 
+      <MapInvalidator /> 
+      <MapResizeHandler isSidebarOpen={isSidebarOpen} /> 
+
+      <GeoJSON data={timisoaraBoundary as any} style={geoJsonStyle} filter={filterCityBoundary} />
+
+      {/* Loop through the projects to create markers */}
       {projects.map(project => {
-        if (!project.latitude || !project.longitude) return null;
-
+        // Skip projects without valid coordinates
+        if (!project.latitude || !project.longitude) {
+          console.warn(`Project "${project.title}" missing coordinates, skipping marker`);
+          return null;
+        }
         return (
-          <Marker key={project.id} position={[project.latitude, project.longitude]} icon={customIcon}>
+          <Marker 
+            key={project.id} 
+            position={[project.latitude, project.longitude]} 
+            icon={customIcon}
+          >
             <Popup>
-              <div style={{ maxWidth: '250px' }}>
+              <div style={{ maxWidth: '200px' }}>
                 <h4 style={{ margin: '0 0 5px 0' }}>{project.title} ({project.status})</h4>
-                <p><strong>Locație:</strong> {project.location}</p>
-                <p><strong>Proiectant:</strong> {project.designer}</p>
-
-                <button 
-                  onClick={() => openDetailsModal(project)}
-                  style={{ padding: '5px 10px', backgroundColor: '#132186ff', color: 'white', border: 'none', borderRadius: '4px', marginTop: '5px' }}
-                >
+                <p style={{ margin: '5px 0' }}><strong>Locație:</strong> {project.location}</p>
+                <p style={{ margin: '5px 0' }}><strong>Proiectant:</strong> {project.designer}</p>
+                 <button 
+                    onClick={() => openDetailsModal(project)} // Trigger modal function
+                    style={{ 
+                      padding: '5px 10px', backgroundColor: '#132186ff', color: 'white', border: 'none', borderRadius: '4px', marginTop: '10px'
+                    }}>
                   Vezi Detalii
                 </button>
-
-                {/* Comentarii */}
-                <div style={{ marginTop: '10px' }}>
-                  <h5>Comentarii:</h5>
-                  {(comments[project.id] || []).map((c, idx) => (
-                    <p key={idx}><strong>{c.user_email}:</strong> {c.text}</p>
-                  ))}
-
-                  {user && (
-                    <div style={{ marginTop: '5px' }}>
-                      <input 
-                        type="text" 
-                        value={newComment} 
-                        onChange={e => setNewComment(e.target.value)}
-                        placeholder="Scrie un comentariu..." 
-                        style={{ width: "100%", padding: "5px", borderRadius: "5px" }}
-                      />
-                      <button 
-                        onClick={() => handleAddComment(project.id)}
-                        style={{ marginTop: "5px", padding: "5px 10px", borderRadius: "5px", backgroundColor: "#132186ff", color: "white", border: "none" }}
-                      >
-                        Trimite
-                      </button>
-                    </div>
-                  )}
-                </div>
-
               </div>
             </Popup>
           </Marker>
         );
       })}
+
     </MapContainer>
   );
 }
