@@ -6,6 +6,9 @@ import ProjectList from './ProjectList';
 import { createClient } from '@/libs/supabase/client';
 import ProjectDetailsModal from './ProjectDetailsModal'; 
 import type { Project } from './ProjectList';
+
+import { User } from '@supabase/supabase-js';
+
 import dynamic from 'next/dynamic';
 
 // Dynamic Map Import: Uses MapComponent name
@@ -41,37 +44,48 @@ const STATUS_DB_TO_UI_MAP = {
 
 
 export default function MainLayout({ children }: { children?: React.ReactNode }) {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [projects, setProjects] = useState<Project[]>([]); // Toate proiectele din DB
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedProject, setSelectedProject] = useState<Project | null >(null);
+   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+   const [projects, setProjects] = useState<Project[]>([]);
+   const [isLoading, setIsLoading] = useState(true);
+   const [selectedProject, setSelectedProject] = useState<Project | null >(null);
+   const [user, setUser] = useState<User | null>(null);
     
-    // 🚨 STĂRILE DE FILTRARE SUNT MUTATE AICI 🚨
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('Toate'); // 'Toate' este opțiunea implicită RO
+   
 
-    const supabase = createClient();
+   const supabase = createClient();
+
+   useEffect(() => {
+    const sessionUser = supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
 
-    useEffect(() => {
-        async function fetchProjects() {
-            setIsLoading(true);
-            const { data, error } = await supabase
-                .from('projects') 
-                .select('*'); 
-  
-            if (error) {
-                console.error('Error fetching projects:', error);
-            } else if (data) {
-                setProjects(data as Project[]);
-            }
-            setIsLoading(false);
-        }
-  
-        fetchProjects();
-    }, []); 
-    
-    // 🚨 LOGICA DE FILTRARE CENTRALĂ (Se aplică pe lista projects) 🚨
+  useEffect(() => {
+          async function fetchProjects() {
+              setIsLoading(true);
+              const { data, error } = await supabase
+                  .from('projects') 
+                  .select('*'); 
+  
+              if (error) {
+                  console.error('Error fetching projects:', error);
+              } else if (data) {
+                  console.log('✅ Successfully fetched project data:', data);
+                  setProjects(data as Project[]);
+              }
+              setIsLoading(false);
+          }
+  
+          fetchProjects();
+      }, []); 
+
     const filteredProjects = projects.filter(project => {
         const term = searchTerm.toLowerCase();
         
@@ -89,58 +103,42 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
         const matchesStatus = statusFilter === 'Toate' || projectStatusRo === statusFilter;
 
         return matchesSearch && matchesStatus;
-    });
+    }); 
+    
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+  
+  const openDetailsModal = (project: Project) => {
+    // Ensures we pass the full project object including description
+    setSelectedProject(project);
+  };
+  
+  // Function to close the modal
+  const closeDetailsModal = () => {
+    setSelectedProject(null);
+  };
+  
+  return (
+    <div style={pageContainerStyle}>
+        <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} user={user} supabase={supabase} /> 
 
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
-  
-    const openDetailsModal = (project: Project) => {
-        setSelectedProject(project);
-    };
-  
-    const closeDetailsModal = () => {
-        setSelectedProject(null);
-    };
-  
-    return (
-        <div style={pageContainerStyle}>
-            <Header onMenuToggle={toggleSidebar} isOpen={isSidebarOpen} /> 
-
-            <div style={contentAreaStyle}>
-                
-                {/* 🚨 LISTA PRIMEȘTE SETTER-ELE ȘI DATELE FILTRATE 🚨 */}
-                <ProjectList 
-                    isOpen={isSidebarOpen} 
-                    projects={filteredProjects} // Trimite lista FILTRATĂ
-                    loading={isLoading} 
-                    onProjectClick={openDetailsModal} 
-                    
-                    // Funcții de setare pentru a actualiza state-ul central
-                    setSearchTerm={setSearchTerm} 
-                    setStatusFilter={setStatusFilter} 
-                    currentSearchTerm={searchTerm} // Trimite valoarea curentă înapoi la input
-                    currentStatusFilter={statusFilter}
-                />
-                
-                {selectedProject && (
-                    <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
-                )}
-                
-                {/* 🚨 HARTA PRIMEȘTE DE ASEMENEA DATELE FILTRATE 🚨 */}
-                <div style={mapContainerStyle}>
-                    <MapComponent 
-                        center={[45.7538, 21.2257]} // Centrare pe oraș
-                        zoom={13} 
-                        projects={filteredProjects} // Trimite lista FILTRATĂ
-                        loading={isLoading} 
-                        openDetailsModal={openDetailsModal} 
-                        isSidebarOpen={isSidebarOpen} 
-                    />
-                    {children}
-                </div>
-            </div>
+      <div style={contentAreaStyle}>
+        <ProjectList isOpen={isSidebarOpen} 
+          projects={filteredProjects} 
+          loading={isLoading} 
+          onProjectClick={openDetailsModal} 
+          setSearchTerm={setSearchTerm} 
+          setStatusFilter={setStatusFilter} 
+          currentSearchTerm={searchTerm} // Trimite valoarea curentă înapoi la input
+         currentStatusFilter={statusFilter}
+          />
+         {selectedProject && (
+                 <ProjectDetailsModal project={selectedProject} onClose={closeDetailsModal} />
+             )}
+        <div style={mapContainerStyle}>
+          <Map center={[45.7560, 21.2310]} zoom={13} projects={filteredProjects} loading={isLoading} openDetailsModal={openDetailsModal} isSidebarOpen={isSidebarOpen}  />
+          {children}
         </div>
     );
 }
