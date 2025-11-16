@@ -78,3 +78,24 @@ export async function PATCH(req: Request, { params }: { params: { id: number } }
     return NextResponse.json({ error: 'Unexpected server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: idStr } = await context.params;
+    const id = Number(idStr);
+    console.log(id);
+
+    const supabase = await createClient();
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+
+    if (error) {
+      console.error('Error deleting project', error);
+      return NextResponse.json({ error: 'Failed to delete project' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (err: any) {
+    console.error('Unexpected error in DELETE /api/projects/[id]', err);
+    return NextResponse.json({ error: 'Unexpected server error' }, { status: 500 });
+  }
+}

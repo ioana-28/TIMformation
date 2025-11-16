@@ -46,7 +46,7 @@ interface ProjectListProps {
 // --- 1. Maparea Stărilor și Opțiuni Filtre ---
 // Folosim această mapare pentru a traduce termenii DB în etichete UI (RO)
 
-const STATUS_OPTIONS_RO = ['Toate', 'In Planificare', 'In Desfasurare', 'Finalizat'];
+const STATUS_OPTIONS_RO = ['Toate', 'În Planificare', 'În Desfășurare', 'Finalizat'];
 
 
 // --- 2. Coordonare Culori Status ---

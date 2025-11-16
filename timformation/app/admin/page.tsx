@@ -1,12 +1,195 @@
-import React, { CSSProperties } from 'react';
+
+'use client';
+
+import React, { CSSProperties, useState, useEffect } from 'react';
+import Link from 'next/link';
+import type { Project } from '@/components/ProjectList';
+
+// Helper functions for status colors
+const getStatusBgColor = (status: string): string => {
+  switch (status) {
+    case 'Finalizat': return '#dcf8e5';
+    case 'În planificare': return '#f0e0d0';
+    case 'În desfășurare': return '#cce5ff';
+    default: return '#f9f9f9';
+  }
+};
+
+const getStatusTextColor = (status: string): string => {
+  switch (status) {
+    case 'Finalizat': return '#3c763d';
+    case 'În planificare': return '#8a6d3b';
+    case 'În desfășurare': return '#31708f';
+    default: return '#666';
+  }
+};
 
 // --- 1. FUNCȚIE PENTRU CULOAREA STATUSULUI (Fundal deschis, Text colorat) --
 
 
-// --- 2. COMPONENTA PAGINII DE ADMIN (STATICĂ) ---
+// --- 2. COMPONENTA PAGINII DE ADMIN ---
 const AdminPage: React.FC = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Am hardcodat stilurile pentru a le arăta în exemplu
+  // Fetch projects from server-side API on mount
+  useEffect(() => {
+    let mounted = true;
+    async function fetchProjects() {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/projects');
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        if (!mounted) return;
+        setProjects((json.projects || []) as Project[]);
+      } catch (e) {
+        console.error('Unexpected error fetching projects via API:', e);
+        setError('Failed to load projects');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    fetchProjects();
+    return () => { mounted = false };
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    console.log("id:", id);
+    if (!confirm('Ești sigur că vrei să ștergi acest proiect?')) return;
+
+    try {
+      const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      console.log(res);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        console.error('Error deleting project via API', json);
+        alert('A apărut o eroare la ștergerea proiectului.');
+        return;
+      }
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      console.error('Unexpected error deleting:', e);
+      alert('A apărut o eroare.');
+    }
+  };
+
+  const handleEdit = (id: number) => {
+    const project = projects.find(p => p.id === id);
+    if (!project) return alert('Proiectul nu a fost găsit');
+
+    // Prefill form with project data and switch to edit mode
+    setTitle(project.title || '');
+    setStatusValue(project.status || 'Planning');
+    setCategoryValue(project.category || '');
+    setLocationValue(project.location || '');
+    setDesignerValue(project.designer || '');
+    setBeneficiaryValue(project.beneficiary || '');
+    setEditingId(id);
+    setFormMessage(null);
+  };
+
+  // Form state for creating a project
+  const [title, setTitle] = useState('');
+  const [statusValue, setStatusValue] = useState('Planning');
+  const [categoryValue, setCategoryValue] = useState('');
+  const [locationValue, setLocationValue] = useState('');
+  const [designerValue, setDesignerValue] = useState('');
+  const [beneficiaryValue, setBeneficiaryValue] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
+  // id of project being edited (null when creating)
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormMessage(null);
+
+    if (!title.trim() || !locationValue.trim() || !statusValue.trim()) {
+      setFormMessage('Titlu, locație și status sunt obligatorii.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    const payload = {
+      title: title.trim(),
+      status: statusValue,
+      category: categoryValue || null,
+      location: locationValue.trim(),
+      designer: designerValue || null,
+      beneficiary: beneficiaryValue || null,
+    };
+
+    try {
+      // If editing, send PATCH to update existing project
+      if (editingId) {
+        const res = await fetch(`/api/projects/${editingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingId, ...payload }),
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          console.error('Update project error', json);
+          setFormMessage(json?.error || 'A apărut o eroare la actualizare.');
+          return;
+        }
+
+        const updated: Project = json.project;
+        setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
+        setFormMessage('Proiect actualizat cu succes.');
+        // exit edit mode
+        setEditingId(null);
+      } else {
+        // Create new project
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          console.error('Create project error', json);
+          setFormMessage(json?.error || 'A apărut o eroare la adăugare.');
+          return;
+        }
+
+        const newProject: Project = json.project;
+        // Prepend new project to the list
+        setProjects(prev => [newProject, ...prev]);
+
+        setFormMessage('Proiect adăugat cu succes.');
+      }
+
+      // Reset form fields after success
+      setTitle('');
+      setStatusValue('Planning');
+      setCategoryValue('');
+      setLocationValue('');
+      setDesignerValue('');
+      setBeneficiaryValue('');
+    } catch (err) {
+      console.error('Unexpected error creating/updating project', err);
+      setFormMessage('A apărut o eroare neașteptată.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setTitle('');
+    setStatusValue('Planning');
+    setCategoryValue('');
+    setLocationValue('');
+    setDesignerValue('');
+    setBeneficiaryValue('');
+    setFormMessage(null);
+  };
 
 
   return (
@@ -14,15 +197,15 @@ const AdminPage: React.FC = () => {
       <div style={styles.header}>
         <h1 style={styles.h1}>Administrator de Proiecte</h1>
         {/* Link-ul a fost înlocuit cu un <a> simplu pentru a elimina dependența de 'next/link' */}
-        <a href="/" style={styles.linkBack}>
+                <Link href="/" style={styles.linkBack}>
           &larr; Acasa (Hartă)
-        </a>
+                </Link>
       </div>
 
       <div style={styles.contentWrapper}>
 
         {/* Formular Card */}
-        <form style={styles.card}>
+        <form onSubmit={handleCreateProject} style={styles.card}>
           <h2 style={styles.h2}>Adăugare Proiect</h2>
           
           <div style={styles.formGrid}>
@@ -33,16 +216,17 @@ const AdminPage: React.FC = () => {
                 type="text"
                 name="title"
                 style={styles.input}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
             </div>
 
             <div>
               <label style={styles.label}>Status</label>
-              <select name="status" style={styles.input}>
-                <option value="Planning">Planning</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Canceled">Canceled</option>
+              <select name="status" style={styles.input} value={statusValue} onChange={(e) => setStatusValue(e.target.value)}>
+                <option value="În Planificare">În Planificare</option>
+                <option value="În Desfășurare">În Desfășurare</option>
+                <option value="Finalizat">Finalizat</option>
               </select>
             </div>
             
@@ -52,6 +236,8 @@ const AdminPage: React.FC = () => {
                 type="text"
                 name="category"
                 style={styles.input}
+                value={categoryValue}
+                onChange={(e) => setCategoryValue(e.target.value)}
               />
             </div>
 
@@ -61,6 +247,8 @@ const AdminPage: React.FC = () => {
                 type="text"
                 name="location"
                 style={styles.input}
+                value={locationValue}
+                onChange={(e) => setLocationValue(e.target.value)}
               />
             </div>
 
@@ -70,6 +258,8 @@ const AdminPage: React.FC = () => {
                 type="text"
                 name="designer"
                 style={styles.input}
+                value={designerValue}
+                onChange={(e) => setDesignerValue(e.target.value)}
               />
             </div>
 
@@ -79,14 +269,22 @@ const AdminPage: React.FC = () => {
                 type="text"
                 name="beneficiary"
                 style={styles.input}
+                value={beneficiaryValue}
+                onChange={(e) => setBeneficiaryValue(e.target.value)}
               />
             </div>
           </div>
 
           <div style={styles.buttonContainer}>
-            <button type="submit" style={styles.buttonPrimary}>
-              Adăugare Proiect
+            <button type="submit" style={styles.buttonPrimary} disabled={submitting}>
+              {submitting ? (editingId ? 'Se actualizează...' : 'Se adaugă...') : (editingId ? 'Actualizare Proiect' : 'Adăugare Proiect')}
             </button>
+            {editingId && (
+              <button type="button" style={{ ...styles.buttonDelete, marginLeft: '12px' }} onClick={handleCancelEdit} disabled={submitting}>
+                Anulează
+              </button>
+            )}
+            {formMessage && <p style={{ marginTop: '10px', color: formMessage.includes('succes') ? 'green' : 'red' }}>{formMessage}</p>}
           </div>
         </form>
 
@@ -103,52 +301,39 @@ const AdminPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* Rânduri statice pentru a arăta designul */}
-                <tr style={styles.tableRow}>
-                  <td style={styles.td}>Reabilitare Pod Traian</td>
-                  <td style={styles.td}>
-                    <span style={{ 
-                      ...styles.statusPill,
-                  
+                {loading && (
+                  <tr style={styles.tableRow}>
+                    <td style={styles.td} colSpan={3}>Se încarcă...</td>
+                  </tr>
+                )}
+                {error && (
+                  <tr style={styles.tableRow}>
+                    <td style={{ ...styles.td, color: 'red' }} colSpan={3}>Eroare: {error}</td>
+                  </tr>
+                )}
+                {!loading && projects.length === 0 && (
+                  <tr style={styles.tableRow}>
+                    <td style={styles.td} colSpan={3}>Niciun proiect găsit</td>
+                  </tr>
+                )}
+                {projects.map(project => (
+                  <tr key={project.id} style={styles.tableRow}>
+                    <td style={styles.td}>{project.title}</td>
+                    <td style={styles.td}>
+                      <span style={{ 
+                        ...styles.statusPill,
+                        backgroundColor: getStatusBgColor(project.status),
+                        color: getStatusTextColor(project.status),
                       }}>
-                      In Progress
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <button style={styles.buttonEdit}>Editare</button>
-                    <button style={styles.buttonDelete}>Ștergere</button>
-                  </td>
-                </tr>
-                <tr style={styles.tableRow}>
-                  <td style={styles.td}>Extindere Parc Botanic</td>
-                  <td style={styles.td}>
-                    <span style={{ 
-                      ...styles.statusPill,
-                    
-                      }}>
-                      Planning
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <button style={styles.buttonEdit}>Editare</button>
-                    <button style={styles.buttonDelete}>Ștergere</button>
-                  </td>
-                </tr>
-                <tr style={styles.tableRow}>
-                  <td style={styles.td}>Modernizare Piața Unirii</td>
-                  <td style={styles.td}>
-                    <span style={{ 
-                      ...styles.statusPill,
-    
-                      }}>
-                      Completed
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <button style={styles.buttonEdit}>Editare</button>
-                    <button style={styles.buttonDelete}>Ștergere</button>
-                  </td>
-                </tr>
+                        {project.status}
+                      </span>
+                    </td>
+                    <td style={styles.td}>
+                      <button style={styles.buttonEdit} onClick={() => handleEdit(project.id)}>Editare</button>
+                      <button style={styles.buttonDelete} onClick={() => handleDelete(project.id)}>Ștergere</button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Project } from './ProjectList'; // Import the unified Project type
 import { createClient } from '@/libs/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { formatDate } from '@/app/utils/formatDate';
 
 import { Montserrat } from 'next/font/google'; 
 
@@ -19,7 +20,8 @@ interface Comment {
 
 
 const montserrat = Montserrat({
-    subsets: ['latin'],
+    // Include latin-ext so Romanian diacritics (ĂÂÎȘȚ etc.) are available
+    subsets: ['latin', 'latin-ext'],
     display: 'swap',
     weight: ['400', '700', '900'], 
     variable: '--font-montserrat', 
@@ -305,10 +307,10 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                     )}
                     
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Creat la:</strong> {formatValue(project.created_at, false, true)}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Creat la:</strong> {formatDate(project.created_at)}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Actualizat la:</strong> {formatValue(project.updated_at, false, true)}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Actualizat la:</strong> {formatDate(project.updated_at)}
                     </p>
 
                     
@@ -350,7 +352,7 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                                     <p style={{ margin: '0 0 5px 0' }}>
                                         <strong style={{ color: '#c0d6ff' }}>{comment.author_name}</strong> 
                                         <span style={{ fontSize: '0.8em', color: '#c0d6ff', marginLeft: '10px' }}>
-                                            — {comment.created_at}
+                                            — {formatDate(comment.created_at)}
                                         </span>
                                     </p>
                                     <p style={{ margin: 0, color: '#f0f4ff' }}>{comment.content}</p>

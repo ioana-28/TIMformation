@@ -159,7 +159,7 @@ const getCustomIcon = (project: Project) => {
         return new L.Icon({
             iconUrl: (imageObject as any).src, 
             iconSize: [80, 80], 
-            iconAnchor: [40, 80], 
+            iconAnchor: [40, 40], 
             popupAnchor: [0, -80] 
         });
     }

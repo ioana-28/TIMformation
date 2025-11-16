@@ -176,10 +176,9 @@ function ProjectAdminPage() {
             value={formData.status}
             onChange={handleInputChange}
           >
-            <option value="Planned">Planned</option>
-            <option value="Ongoing">Ongoing</option>
-            <option value="Completed">Completed</option>
-            <option value="Canceled">Canceled</option>
+            <option value="În planificare">În planificare</option>
+            <option value="În desfășurare">În desfășurare</option>
+            <option value="Finalizat">Finalizat</option>
           </select>
         </div>
         <div>
