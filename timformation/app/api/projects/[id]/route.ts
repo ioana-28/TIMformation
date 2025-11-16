@@ -17,7 +17,7 @@ type ProjectInput = Partial<{
   latest_change: string | null;
 }>;
 
-export async function PATCH(req: Request, { params }: { params: { id: number } }) {
+export async function PATCH(req: Request) {
   try {
     // ✅ Convert string to number
     
