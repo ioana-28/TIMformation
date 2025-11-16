@@ -255,7 +255,8 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
         color: '#333',
     }}>
         {/* Titlu și Stare */}
-        <h4 style={{ 
+        <h4 style={{
+            display: 'block', 
             margin: '0 0 8px 0', 
             fontSize: '16px', 
             fontWeight: '600', 
@@ -263,10 +264,9 @@ export default function ProjectMap({ center, zoom, projects, isSidebarOpen, open
             paddingBottom: '5px' 
         }}>
             {project.title ?? project.name}
-            
+          <br></br>
             {/* Badge pentru Stare */}
             <span style={{
-                marginLeft: '8px',
                 padding: '3px 6px',
                 borderRadius: '12px',
                 fontSize: '10px',
@@ -278,8 +278,8 @@ color: getStatusColor(project.status).text, // Funcție utilitară (vezi mai jos
             }}>
                 {project.status}
             </span>
-        </h4>
-        
+      
+      </h4>  
         {/* Detalii Proiect */}
         <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
             <p style={{ margin: '5px 0' }}>
