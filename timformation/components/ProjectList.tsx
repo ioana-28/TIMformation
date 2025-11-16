@@ -13,7 +13,7 @@ export interface Project {
     designer?: string;
     location: string;
     beneficiary?: string; 
-    status: string; // <-- Termenul din baza de date (ex: 'In Progress')
+    status: string;
     total_value?: number;
     realization_duration_months?: number;
     execution_duration_months?: number;
@@ -217,17 +217,8 @@ export default function ProjectList({
                                     </span>
 
                                     <hr style={{ border: 'none', borderTop: '1px dashed #eee', margin: '10px 0' }} />
-
-                                    <p style={{ margin: '3px 0', fontSize: '0.9em', color: ACCENT_TEXT_DARK }}>
-                                        <span style={{ fontWeight: 'bold', color: '#555' }}>Proiectant:</span> {project.designer}
-                                    </p>
-
                                     <p style={{ margin: '3px 0', fontSize: '0.9em', color: ACCENT_TEXT_DARK }}>
                                         <span style={{ fontWeight: 'bold', color: '#555' }}>Locație:</span> {project.location}
-                                    </p>
-                                        
-                                    <p style={{ margin: '10px 0 0 0', fontSize: '0.9em', color: '#666' }}>
-                                        {project.description}
                                     </p>
                                 </div>
                             );

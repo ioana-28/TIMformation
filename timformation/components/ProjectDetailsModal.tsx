@@ -5,6 +5,7 @@ import { Project } from './ProjectList'; // Import the unified Project type
 import { createClient } from '@/libs/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import { formatDate } from '@/app/utils/formatDate';
+import { formatNumber } from '@/app/utils/formatNumber';
 
 import { Montserrat } from 'next/font/google'; 
 
@@ -169,7 +170,7 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
     }, [project.id, supabase]);
 
     const statusStyle = getStatusTagStyle(project.status);
-    const totalValueDisplay = formatValue(project.total_value, true);
+    const totalValueDisplay = formatValue(formatNumber(project.total_value) + ' lei', true);
 
     // 2. Handler for adding a new comment
     const handlePostComment = async (e: React.FormEvent) => {
@@ -262,19 +263,19 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                         <strong style={{color: NEUTRAL_LABEL_COLOR}}>Titlu:</strong> {project.title ?? project.name}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Proiectant:</strong> {formatValue(project.designer)}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Proiectant:</strong> {formatValue(project.designer ? project.designer : 'N/A')}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
                         <strong style={{color: NEUTRAL_LABEL_COLOR}}>Locație:</strong> {formatValue(project.location)}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Beneficiar:</strong> {formatValue(project.beneficiary)}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Beneficiar:</strong> {formatValue(project.beneficiary ? project.beneficiary : 'N/A')}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Categorie:</strong> {formatValue(project.category)}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Categorie:</strong> {formatValue(project.category ? project.category : 'N/A')}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Descriere Completă:</strong> {project.description}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Descriere Completă:</strong> {project.description ? project.description : 'N/A'}
                     </p>
                     
                     {/* Secțiunea 2: Valori și Durate */}
@@ -284,10 +285,10 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                         <strong style={{color: NEUTRAL_LABEL_COLOR}}>Valoare Totală:</strong> {totalValueDisplay}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Durată Realizare:</strong> {formatValue(project.realization_duration_months) + (project.realization_duration_months ? ' luni' : '')}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Durată Realizare:</strong> {formatValue(project.realization_duration_months ? project.realization_duration_months + ' luni' : '-')}
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Durată Execuție:</strong> {formatValue(project.execution_duration_months) + (project.execution_duration_months ? ' luni' : '')}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Durată Execuție:</strong> {formatValue(project.execution_duration_months ? project.execution_duration_months + ' luni' : '-')}
                     </p>
                     
 
@@ -295,7 +296,7 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                     <h3 style={sectionHeaderStyle}>Documentație și Log</h3>
 
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
-                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Ultima Modificare:</strong> {formatValue(project.latest_change)}
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Ultima Modificare:</strong> {formatValue(project.latest_change ? project.latest_change : 'N/A')}
                     </p>
                     
                     {project.latest_decision_url && (
@@ -311,13 +312,7 @@ export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
                     </p>
                     <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
                         <strong style={{color: NEUTRAL_LABEL_COLOR}}>Actualizat la:</strong> {formatDate(project.updated_at)}
-                    </p>
-
-                    
-                    {/* Secțiunea 4: Descriere */}
-                    <h3 style={sectionHeaderStyle}>Descriere</h3>
-                    <p style={{marginBottom: 20, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>{project.description}</p> 
-                    
+                    </p>                    
                     
                     {/* 💥 SECȚIUNEA DE COMENTARII ÎNCADRATĂ (Albastru Închis - Navy) 💥 */}
                     <div style={commentsContainerStyle}>

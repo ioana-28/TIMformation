@@ -25,38 +25,83 @@ const headerStyle: React.CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '10px 20px',
+    padding: '0 24px',
     backgroundColor: '#08205b', 
-    borderBottom: '1px solid #2452a7ff',
-    boxShadow: '0 2px 4px rgba(16, 136, 60, 0.05)',
-    height: '60px', 
+    borderBottom: '2px solid #2452a7ff',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    height: '70px', 
     fontFamily: 'var(--font-goldman), sans-serif', 
 };
 
+const leftContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+};
+
+const logoStyle: React.CSSProperties = {
+    textDecoration: 'none',
+    fontFamily: 'var(--font-goldman), sans-serif',
+    color: '#f4ece4ff', 
+    fontSize: '1.6em', 
+    fontWeight: 'bold',
+    letterSpacing: '0.5px',
+    transition: 'color 0.2s ease',
+};
+
+const navContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '24px',
+};
+
 const linkStyle: React.CSSProperties = {
-    marginLeft: '20px',
     textDecoration: 'none',
     color: '#d0e4ff',
-    fontSize: '1em',
+    fontSize: '0.9em',
+    fontWeight: '500',
+    transition: 'color 0.2s ease',
+    padding: '8px 16px',
 };
 
 const adminButtonStyle: React.CSSProperties = {
-  marginLeft: '20px',
-  padding: '5px 10px',
-  backgroundColor: '#f4ece4ff',
-  color: '#08205b',
-  borderRadius: '4px',
-  textDecoration: 'none',
-  fontWeight: 'bold',
-  transition: 'background 0.3s',
-};    
-    
+    padding: '8px 16px',
+    backgroundColor: '#f4ece4ff',
+    color: '#08205b',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontWeight: '700',
+    fontSize: '0.9em',
+    transition: 'all 0.2s ease',
+    border: 'none',
+    cursor: 'pointer',
+};
+
+const logoutButtonStyle: React.CSSProperties = {
+    padding: '8px 16px',
+    borderRadius: '6px',
+    backgroundColor: '#2452a7',
+    color: '#f4ece4ff',
+    cursor: 'pointer',
+    border: 'none',
+    fontWeight: '600',
+    fontSize: '0.9em',
+    transition: 'all 0.2s ease',
+};
+
+const userEmailStyle: React.CSSProperties = {
+    color: '#a8c5ff',
+    fontSize: '0.9em',
+    fontWeight: '500',
+    padding: '8px 16px'
+};
+
 const iconBaseStyle: React.CSSProperties = {
-    fontSize: '1.5em', 
-    cursor: 'pointer', 
-    marginRight: '15px',
+    fontSize: '1.6em', 
+    cursor: 'pointer',
     color: '#f4ece4ff',
     transition: 'transform 0.3s ease-in-out',
+    padding: '8px',
 };
 
 export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderProps) {
@@ -68,22 +113,18 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
     }
   };
 
-    const pathname = usePathname();  // ✅ DETECTEAZĂ PAGINA CURENTĂ DIN NEXT.JS
-
-    const iconRotatedStyle: React.CSSProperties = {
-        ...iconBaseStyle,
-        transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', 
-    };
+    const pathname = usePathname();
 
     return (
         <header style={headerStyle} className={goldman.variable}>
              
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-
-                {/* ✅ AICI E FIX-UL — apare DOAR pe "/" FĂRĂ REFRESH */}
-                { pathname === "/" && (
+            <div style={leftContainerStyle}>
+                {pathname === "/" && (
                     <span 
-                        style={iconRotatedStyle}
+                        style={{
+                            ...iconBaseStyle,
+                            transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                        }}
                         onClick={onMenuToggle}
                     >
                         ☰
@@ -92,30 +133,24 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
 
                 <Link 
                     href="/" 
-                    style={{ 
-                        textDecoration: 'none',
-                        fontFamily: 'var(--font-goldman), sans-serif',
-                        color: '#f4ece4ff', 
-                        fontSize: '1.4em', 
-                        fontWeight: 'bold' 
-                    }}
+                    style={logoStyle}
                 >
                     TIMformation
                 </Link>
             </div>
 
-            <nav style={{ display: 'flex' }}>
+            <nav style={navContainerStyle}>
                 {user ? (
                     <>
-                        <span style={{ color: '#87b7ff', marginRight: '15px' }}>{user.email}</span>
+                        <span style={userEmailStyle}>{user.email}</span>
                         <button
-                        onClick={handleLogout}
-                        style={{ padding: '6px 12px', borderRadius: '6px', backgroundColor: '#2452a7', color: '#f4ece4ff', cursor: 'pointer' }}
+                            onClick={handleLogout}
+                            style={logoutButtonStyle}
                         >
-                        Logout
+                            Logout
                         </button>
                     </>
-                    ) : (
+                ) : (
                     <>
                         <Link href="/login" style={linkStyle}>Login</Link>
                         <Link href="/register" style={linkStyle}>Register</Link>
@@ -125,7 +160,7 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
                     Send Request
                 </Link>
                 <Link href="/admin" style={adminButtonStyle}>
-                  Admin
+                    Admin
                 </Link>
             </nav>
 

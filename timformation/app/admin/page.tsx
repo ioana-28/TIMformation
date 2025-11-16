@@ -81,22 +81,32 @@ const AdminPage: React.FC = () => {
 
     // Prefill form with project data and switch to edit mode
     setTitle(project.title || '');
-    setStatusValue(project.status || 'Planning');
-    setCategoryValue(project.category || '');
-    setLocationValue(project.location || '');
-    setDesignerValue(project.designer || '');
-    setBeneficiaryValue(project.beneficiary || '');
+    setStatusValue(project.status || 'În Planificare');
+    setCategoryValue(project.category || '-');
+    setLocationValue(project.location || '-');
+    setDesignerValue(project.designer || '-');
+    setBeneficiaryValue(project.beneficiary || '-');
+    setRealizationDurationValue(project.realization_duration_months ? project.realization_duration_months.toString() : '-');
+    setExecutionDurationValue(project.execution_duration_months ? project.execution_duration_months.toString() : '-');
+    setTotalValueValue(project.total_value ? project.total_value.toString() : '-');
+    setLatestChangeValue(project.latest_change || '-');
+    setDescriptionValue(project.description || '-');
     setEditingId(id);
     setFormMessage(null);
   };
 
   // Form state for creating a project
   const [title, setTitle] = useState('');
-  const [statusValue, setStatusValue] = useState('Planning');
+  const [statusValue, setStatusValue] = useState('În Planificare');
   const [categoryValue, setCategoryValue] = useState('');
   const [locationValue, setLocationValue] = useState('');
   const [designerValue, setDesignerValue] = useState('');
   const [beneficiaryValue, setBeneficiaryValue] = useState('');
+  const [totalValueValue, setTotalValueValue] = useState('');
+  const [realizationDurationValue, setRealizationDurationValue] = useState('');
+  const [executionDurationValue, setExecutionDurationValue] = useState('');
+  const [latestChangeValue, setLatestChangeValue] = useState('');
+  const [descriptionValue, setDescriptionValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   // id of project being edited (null when creating)
@@ -120,6 +130,11 @@ const AdminPage: React.FC = () => {
       location: locationValue.trim(),
       designer: designerValue || null,
       beneficiary: beneficiaryValue || null,
+      total_value: totalValueValue ? parseFloat(totalValueValue) : null,
+      realization_duration_months: realizationDurationValue ? parseInt(realizationDurationValue, 10) : null,
+      execution_duration_months: executionDurationValue ? parseInt(executionDurationValue, 10) : null,
+      latest_change: latestChangeValue || null,
+      description: descriptionValue || null,
     };
 
     try {
@@ -167,11 +182,16 @@ const AdminPage: React.FC = () => {
 
       // Reset form fields after success
       setTitle('');
-      setStatusValue('Planning');
-      setCategoryValue('');
+      setStatusValue('În Planificare');
+      setCategoryValue('-');
       setLocationValue('');
-      setDesignerValue('');
-      setBeneficiaryValue('');
+      setDesignerValue('-');
+      setBeneficiaryValue('-');
+      setTotalValueValue('-');
+      setRealizationDurationValue('-');
+      setExecutionDurationValue('-');
+      setLatestChangeValue('-');
+      setDescriptionValue('-');
     } catch (err) {
       console.error('Unexpected error creating/updating project', err);
       setFormMessage('A apărut o eroare neașteptată.');
@@ -183,11 +203,16 @@ const AdminPage: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingId(null);
     setTitle('');
-    setStatusValue('Planning');
+    setStatusValue('În Planificare');
     setCategoryValue('');
     setLocationValue('');
     setDesignerValue('');
     setBeneficiaryValue('');
+    setTotalValueValue('');
+    setRealizationDurationValue('');
+    setExecutionDurationValue('');
+    setLatestChangeValue('');
+    setDescriptionValue('');
     setFormMessage(null);
   };
 
@@ -271,6 +296,61 @@ const AdminPage: React.FC = () => {
                 style={styles.input}
                 value={beneficiaryValue}
                 onChange={(e) => setBeneficiaryValue(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={styles.label}>Valoare Totală</label>
+              <input
+                type="text"
+                name="total_value"
+                style={styles.input}
+                value={totalValueValue}
+                onChange={(e) => setTotalValueValue(e.target.value)}
+              />
+            </div>
+
+             <div>
+              <label style={styles.label}>Durată Realizare</label>
+              <input
+                type="text"
+                name="realization_duration_months"
+                style={styles.input}
+                value={realizationDurationValue}
+                onChange={(e) => setRealizationDurationValue(e.target.value)}
+              />
+            </div>
+
+             <div>
+              <label style={styles.label}>Durată Execuție</label>
+              <input
+                type="text"
+                name="execution_duration_months"
+                style={styles.input}
+                value={executionDurationValue}
+                onChange={(e) => setExecutionDurationValue(e.target.value)}
+              />
+            </div>
+
+             <div>
+              <label style={styles.label}>Ultima Modificare</label>
+              <input
+                type="text"
+                name="latest_change"
+                style={styles.input}
+                value={latestChangeValue}
+                onChange={(e) => setLatestChangeValue(e.target.value)}
+              />
+            </div>
+
+             <div style={styles.gridSpan2}>
+              <label style={styles.label}>Descriere</label>
+              <input
+                type="textarea"
+                name="description"
+                style={styles.input}
+                value={descriptionValue}
+                onChange={(e) => setDescriptionValue(e.target.value)}
               />
             </div>
           </div>
