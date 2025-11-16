@@ -2,10 +2,8 @@
 
 'use client'; 
 
-// `createClient` removed: this component receives projects from parent
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import React from 'react'; 
-
 
 
 export interface Project {
@@ -14,30 +12,64 @@ export interface Project {
     name?: string;
     designer?: string;
     location: string;
-    beneficiary?: string;  
-    status: string;
+    beneficiary?: string; 
+    status: string; // <-- Termenul din baza de date (ex: 'In Progress')
     total_value?: number;
     realization_duration_months?: number;
     execution_duration_months?: number;
     latest_decision_url?: string;
     latest_change?: string;
     category?: string;
-    description?: string;
+    description?: string; 
     latitude: number;
     longitude: number;
+    updated_at: string;
+    created_at: string;
 }
 
 interface ProjectListProps {
     isOpen: boolean; 
     onProjectClick: (project: Project) => void; 
-    projects: Project[];
+    projects: Project[]; // Lista de proiecte FILTRATĂ primită de la MainLayout
     loading: boolean;
+
+    // 🚨 NOU: Funcțiile pentru a trimite valoarea filtrului la părinte
+    setSearchTerm: (term: string) => void;
+    setStatusFilter: (status: string) => void;
+
+    // 🚨 NOU: Valoarea curentă a input-urilor (pentru a le controla)
+    currentSearchTerm: string;
+    currentStatusFilter: string;
 }
 
 
-// --- 1. Constants and Style Definitions ---
+// --- 1. Maparea Stărilor și Opțiuni Filtre ---
+// Folosim această mapare pentru a traduce termenii DB în etichete UI (RO)
+
+const STATUS_OPTIONS_RO = ['Toate', 'In Planificare', 'In Desfasurare', 'Finalizat'];
+
+
+// --- 2. Coordonare Culori Status ---
+const getStatusColor = (statusRo: string) => { 
+    switch (statusRo) {
+        case 'Finalizat':
+            return { bg: '#a0c4ff', text: '#00287a' }; 
+        case 'În Planificare':
+            return { bg: '#fcf8e3', text: '#8a6d3b' }; 
+        case 'În Desfășurare':
+            return { bg: '#d9b380', text: '#333333' }; 
+        default: 
+            return { bg: '#f9f9f9', text: '#666' };
+    }
+};
+
+// --- 3. Stiluri de Bază ---
+const ACCENT_TEXT_DARK = '#0e0226ff'; 
+const DIVIDER_COLOR = '#e0e0e0'; 
+const NEUTRAL_BORDER_LIGHT = '#bbb'; 
+
 const listContainerBaseStyle: React.CSSProperties = {
-    backgroundColor: '#f7f7f7', 
+    backgroundColor:'#e3eaf5ff', 
     height: '100%',
     overflowY: 'auto', 
     transition: 'width 0.3s ease-in-out, min-width 0.3s ease-in-out, padding 0.3s ease-in-out',
@@ -45,7 +77,7 @@ const listContainerBaseStyle: React.CSSProperties = {
 
 const searchContainerStyle: React.CSSProperties = {
     padding: '10px 0',
-    borderBottom: '1px solid #e0e0e0', 
+    borderBottom: `1px solid ${DIVIDER_COLOR}`, 
     marginBottom: '10px',
     color: '#333',
 };
@@ -53,56 +85,21 @@ const searchContainerStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px',
-    border: '1px solid #ccc', 
+    border: `1px solid ${NEUTRAL_BORDER_LIGHT}`, 
     borderRadius: '8px', 
     boxSizing: 'border-box', 
     fontSize: '1em',
-    color: '#0e0226ff',
+    color: ACCENT_TEXT_DARK,
 };
-
-const STATUS_OPTIONS = ['All', 'In Progress', 'Planning', 'Completed'];
-
-
-
-// --- 2. Coordinated Color Helpers ---
-const getStatusColor = (status: string) => {
-    switch (status) {
-        case 'Completed': return { bg: '#dcf8e5', text: '#3c763d' }; 
-        case 'Planning': return { bg: '#f0e0d0', text: '#8a6d3b' }; 
-        case 'In Progress': return { bg: '#cce5ff', text: '#31708f' }; 
-        default: return { bg: '#f9f9f9', text: '#666' };
-    }
-};
-
-// --- 3. Mock Data with Coordinates and Details (EXPORTED) ---
 
 
 // --- 4. Main Component ---
-export default function ProjectList({ isOpen, onProjectClick, projects, loading }: ProjectListProps) {
+export default function ProjectList({ 
+    isOpen, onProjectClick, projects, loading,
+    setSearchTerm, setStatusFilter, currentSearchTerm, currentStatusFilter 
+}: ProjectListProps) {
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All');
 
-
-    // Filter projects using the fetched data and the search term
-    const filteredProjects = useMemo(() => {
-        if (loading) return [];
-
-        const term = searchTerm.toLowerCase();
-
-        return projects.filter((project) => {
-            // support either `title` or legacy/mock `name` field
-            const matchesSearch =
-                project.title.toLowerCase().includes(term) ||
-                ((project.location ?? '') as string).toLowerCase().includes(term) ||
-                ((project.designer ?? '') as string).toLowerCase().includes(term);
-
-            const matchesStatus = statusFilter === 'All' || project.status === statusFilter;
-
-            return matchesSearch && matchesStatus;
-        });
-    }, [projects, searchTerm, loading, statusFilter]);
-   
     const finalContainerStyle: React.CSSProperties = {
         ...listContainerBaseStyle,
         
@@ -114,59 +111,49 @@ export default function ProjectList({ isOpen, onProjectClick, projects, loading 
         pointerEvents: isOpen ? 'auto' : 'none', 
     };
 
-
-
     return (
         <aside style={finalContainerStyle}>
             {isOpen && (<>
                 <div style={{ padding: '0 10px' }}>
                     <h3 style={{ 
                         margin: 0, 
-                        paddingBottom: '5px', // Space above the line
-                        // CORRECTED SYNTAX: width style color
-                        borderBottom: '1px solid #c7c7c7' 
+                        paddingBottom: '5px', 
+                        borderBottomWidth: '1px', 
+                        borderBottomStyle: 'solid',
+                        borderBottomColor: '#00287a',
+                        color: '#00287a',
+                        fontWeight: '700'
                     }}>
-                        All Projects
+                        Toate Proiectele 
                     </h3>
-            
-                    <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#666' }}>
-                        {filteredProjects.length} projects found
+        
+                    <p style={{ margin: '5px 0 10px 0', fontSize: '0.9em', color: '#00287a' }}>
+                        {projects.length} proiecte găsite
                     </p>
 
-                    <hr style={{ borderTop: '1px solid #e0e0e0', margin: '0 0 15px 0' }} />
-                </div>
-
-                   
-
-                <div style={searchContainerStyle}>
-                    <input
-                        type="text"
-                        placeholder="Search projects by name, location, or designer..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={inputStyle}     
-                        />
+                    <hr style={{ borderTop: `1px solid ${DIVIDER_COLOR}`, margin: '0 0 15px 0', border: 'none' }} />
                 </div>
 
                 <div style={{ marginBottom: '15px', padding: '0 10px' }}>
                     <label htmlFor="status-filter" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: '#555' }}>
-                        Filter by Status:
+                        Filtrare după Stare:
                     </label>
                     <select
                         id="status-filter"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
+                        value={currentStatusFilter} // Folosește starea curentă din prop-uri
+                        onChange={(e) => setStatusFilter(e.target.value)} // Trimite schimbarea la MainLayout
                         style={{
                             width: '100%',
                             padding: '8px',
-                            border: '1px solid #ccc',
+                            border: `1px solid blue`,
                             borderRadius: '8px',
                             boxSizing: 'border-box',
                             fontSize: '1em',
                             backgroundColor: 'white',
+                            color: 'gray'
                         }}
                     >
-                        {STATUS_OPTIONS.map(status => (
+                        {STATUS_OPTIONS_RO.map(status => (
                             <option key={status} value={status}>
                                 {status}
                             </option>
@@ -174,81 +161,86 @@ export default function ProjectList({ isOpen, onProjectClick, projects, loading 
                     </select>
                 </div>
                     
+                <div style={searchContainerStyle}>
+                    <input
+                        type="text"
+                        placeholder="Căutare proiecte..."
+                        value={currentSearchTerm} // Folosește starea curentă din prop-uri
+                        onChange={(e) => setSearchTerm(e.target.value)} // Trimite schimbarea la MainLayout
+                        style={inputStyle} 
+                        />
+                </div>
+                    
                 <div style={{ padding: '0 10px' }}>
-                    {filteredProjects.map(project => {
-                        const statusStyle = getStatusColor(project.status); 
-                            
-                        return (
-                            <div 
-                                key={project.id}
-                                onClick={() => onProjectClick(project)} 
-                                style={{ 
-                                        // Rounded card styling
-                                    border: '1px solid #ddd', 
-                                    padding: '15px', 
-                                    marginBottom: '10px', 
-                                    backgroundColor: '#ffffff', 
-                                    borderRadius: '10px', 
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-                                    transition: 'transform 0.2s ease-in-out', 
-                                    cursor: 'pointer', 
-                                    width: '100%',
-                                    boxSizing: 'border-box'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                >
-                
-                                <h4 style={{ margin: '0 0 5px 0' }}>{project.title ?? project.name}</h4>
-                                <span 
+                    {loading ? (
+                        <p style={{ textAlign: 'center', marginTop: '20px', color: '#666' }}>Se încarcă proiectele...</p>
+                    ) : (
+                        projects.map(project => {
+                            // Conversia stării din DB la starea UI (pentru afișare/culori)
+                            const projectStatusRo = project.status ; 
+                            const statusStyle = getStatusColor(projectStatusRo); 
+                                
+                            return (
+                                <div 
+                                    key={project.id}
+                                    onClick={() => onProjectClick(project)} 
                                     style={{ 
-                                        backgroundColor: statusStyle.bg, 
-                                        color: statusStyle.text,
-                                        padding: '3px 8px', 
-                                        fontSize: '0.85em', 
-                                        borderRadius: '15px', 
-                                        fontWeight: '600', 
-                                        marginBottom: '10px', 
-                                        display: 'inline-block'
+                                        borderWidth: '1px', borderStyle: 'solid', borderColor: '#ddd', 
+                                        padding: '15px', marginBottom: '10px', 
+                                        backgroundColor: '#ffffff', 
+                                        borderRadius: '10px', 
+                                        boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+                                        transition: 'transform 0.2s ease-in-out', 
+                                        cursor: 'pointer', 
+                                        width: '100%',
+                                        boxSizing: 'border-box'
                                     }}
+                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                                     >
-                                        {project.status}
-                                </span>
-
-                                    {/* Separator line (Fixed style conflict) */}
-                                    <hr 
-                                        style={{ 
-                                            border: 'none', 
-                                            borderTop: '1px dashed #eee', 
-                                            margin: '10px 0' 
-                                        }} 
-                                    />
-
-                                {/* Proiectant */}
-                                <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
-                                    <span style={{ fontWeight: 'bold', color: '#555' }}>Proiectant:</span> {project.designer}
-                                </p>
-
-                                <p style={{ margin: '3px 0', fontSize: '0.9em' }}>
-                                    <span style={{ fontWeight: 'bold', color: '#555' }}>Locație:</span> {project.location}
-                                </p>
                                     
-                                    {/* Description (short) */}
+                                    <h4 style={{ margin: '0 0 5px 0', color: ACCENT_TEXT_DARK }}>{project.title ?? project.name}</h4>
+                                    <span 
+                                        style={{ 
+                                            backgroundColor: statusStyle.bg, 
+                                            color: statusStyle.text,
+                                            padding: '3px 8px', 
+                                            fontSize: '0.85em', 
+                                            borderRadius: '15px', 
+                                            fontWeight: '600', 
+                                            marginBottom: '10px', 
+                                            display: 'inline-block'
+                                        }}
+                                    >
+                                        {/* AFIȘEAZĂ STAREA EXACT DIN BAZA DE DATE */}
+                                        {project.status}
+                                    </span>
+
+                                    <hr style={{ border: 'none', borderTop: '1px dashed #eee', margin: '10px 0' }} />
+
+                                    <p style={{ margin: '3px 0', fontSize: '0.9em', color: ACCENT_TEXT_DARK }}>
+                                        <span style={{ fontWeight: 'bold', color: '#555' }}>Proiectant:</span> {project.designer}
+                                    </p>
+
+                                    <p style={{ margin: '3px 0', fontSize: '0.9em', color: ACCENT_TEXT_DARK }}>
+                                        <span style={{ fontWeight: 'bold', color: '#555' }}>Locație:</span> {project.location}
+                                    </p>
+                                        
                                     <p style={{ margin: '10px 0 0 0', fontSize: '0.9em', color: '#666' }}>
                                         {project.description}
                                     </p>
                                 </div>
                             );
-                        })}
-                    {filteredProjects.length === 0 && (
+                        })
+                    )}
+                    {projects.length === 0 && !loading && (
                         <p style={{ color: '#999', textAlign: 'center', marginTop: '20px' }}>
-                            No projects found matching &apos;{searchTerm}&apos;.
+                            Niciun proiect găsit corespunzător căutării &apos;{currentSearchTerm}&apos;.
                         </p>
                     )}
                 </div>
                     
-            </>
-            )}
+            </>)}
         </aside>
     );
 }

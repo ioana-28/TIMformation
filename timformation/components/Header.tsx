@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React from 'react';
 import { User, SupabaseClient } from '@supabase/supabase-js';
+import { usePathname } from "next/navigation";   // ✅ IMPORTAT
 
 // 1. DEFINIREA FONTULUI GOLDMAN (Singurul necesar)
 import { Goldman } from 'next/font/google';
@@ -14,7 +15,6 @@ const goldman = Goldman({
   variable: '--font-goldman', 
 });
 
-
 interface HeaderProps {
     onMenuToggle: () => void;
     isOpen: boolean; 
@@ -22,38 +22,32 @@ interface HeaderProps {
     supabase?: SupabaseClient; 
 }
 
-// 2. STILURILE PENTRU HEADER (Definiții duplicate REZOLVATE)
+// 2. Stiluri
 const headerStyle: React.CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '10px 20px',
-    // Am păstrat doar una dintre definițiile de culoare:
     backgroundColor: '#08205b', 
     borderBottom: '1px solid #2452a7ff',
     boxShadow: '0 2px 4px rgba(16, 136, 60, 0.05)',
     height: '60px', 
-    // APLICARE FONT: Goldman pentru toate elementele din header
     fontFamily: 'var(--font-goldman), sans-serif', 
 };
 
-// 3. STILURILE PENTRU LINK-URI (Definiții duplicate REZOLVATE)
 const linkStyle: React.CSSProperties = {
     marginLeft: '20px',
     textDecoration: 'none',
-    // Am păstrat doar una dintre definițiile de culoare:
     color: '#d0e4ff',
     fontSize: '1em',
-    // Nu mai este necesară aplicarea explicită a fontFamily aici, moștenește de la headerStyle.
 };
 
-// 4. STILURILE PENTRU ICON (Cu culoare unificată)
 const iconBaseStyle: React.CSSProperties = {
     fontSize: '1.5em', 
     cursor: 'pointer', 
     marginRight: '15px',
-    color: '#f4ece4ff', // Culoare deschisă unificată
-    transition: 'transform 0.3s ease-in-out', 
+    color: '#f4ece4ff',
+    transition: 'transform 0.3s ease-in-out',
 };
 
 export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderProps) {
@@ -65,7 +59,8 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
     }
   };
 
-    // 5. STILUL ROTIT (Definiție duplicată REZOLVATĂ)
+    const pathname = usePathname();  // ✅ DETECTEAZĂ PAGINA CURENTĂ DIN NEXT.JS
+
     const iconRotatedStyle: React.CSSProperties = {
         ...iconBaseStyle,
         transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', 
@@ -73,20 +68,24 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
 
     return (
         <header style={headerStyle} className={goldman.variable}>
-
+             
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span 
-                    style={iconRotatedStyle} // Aplicare stil rotit
-                    onClick={onMenuToggle}
-                >
-                    ☰ 
-                </span>
-                
+
+                {/* ✅ AICI E FIX-UL — apare DOAR pe "/" FĂRĂ REFRESH */}
+                { pathname === "/" && (
+                    <span 
+                        style={iconRotatedStyle}
+                        onClick={onMenuToggle}
+                    >
+                        ☰
+                    </span>
+                )}
+
                 <Link 
                     href="/" 
                     style={{ 
-                        textDecoration: 'none', 
-                        fontFamily: 'var(--font-goldman), sans-serif', // Aplicare explicită pentru titlu
+                        textDecoration: 'none',
+                        fontFamily: 'var(--font-goldman), sans-serif',
                         color: '#f4ece4ff', 
                         fontSize: '1.4em', 
                         fontWeight: 'bold' 
@@ -96,8 +95,6 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
                 </Link>
             </div>
 
-
-            {/* Right Side: Navigation Links */}
             <nav style={{ display: 'flex' }}>
                 {user ? (
                     <>
@@ -121,10 +118,8 @@ export default function Header({ onMenuToggle, isOpen, user, supabase }: HeaderP
                 <Link href="/Q&A" style={linkStyle}>
                     Q&A
                 </Link>
-                
-                
-                
             </nav>
+
         </header>
     );
 }
