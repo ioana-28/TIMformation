@@ -1,0 +1,363 @@
+// timformation/components/ProjectDetailsModal.tsx
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { Project } from './ProjectList'; // Import the unified Project type
+import { createClient } from '@/libs/supabase/client';
+import type { User } from '@supabase/supabase-js';
+import { formatDate } from '@/app/utils/formatDate';
+import { formatNumber } from '@/app/utils/formatNumber';
+
+import { Montserrat } from 'next/font/google'; 
+
+// Define the Comment type (for local state)
+interface Comment {
+    id: number;
+    project_id: number;
+    author_id: string;
+    author_name: string;
+    content: string;
+    created_at: string;
+}
+
+
+const montserrat = Montserrat({
+    // Include latin-ext so Romanian diacritics (ĂÂÎȘȚ etc.) are available
+    subsets: ['latin', 'latin-ext'],
+    display: 'swap',
+    weight: ['400', '700', '900'], 
+    variable: '--font-montserrat', 
+});
+
+interface ModalProps {
+    project: Project; onClose: () => void;
+}
+
+// --- Style Definitions ---
+const ACCENT_DARK_BLUE = '#130852ff';
+const ACCENT_ACTION_BLUE = '#84a6deff';
+const NEUTRAL_FONT_COLOR = '#222'; 
+const NEUTRAL_LABEL_COLOR = '#000'; 
+const LIGHT_BLUE_BOX = '#fff3f0ff'; 
+const DARK_BLUE_COMMENT_BG = '#1e3a63'; 
+
+const modalBackdropStyle: React.CSSProperties = { 
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', zIndex: 2000,
+    display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', 
+};
+
+const modalContentStyle: React.CSSProperties = { 
+    backgroundColor: 'white', padding: '30px', 
+    borderRadius: '12px', maxWidth: '650px', 
+    width: '90%', 
+    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)', cursor: 'default', maxHeight: '90vh', 
+    overflowY: 'auto', 
+};
+
+const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box', marginBottom: '10px'
+};
+
+// 🛠️ FIX 1: Fundalul sticky este setat la ALB pentru a acoperi fundalul negru al backdrop-ului
+const stickyHeaderStyle: React.CSSProperties = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+    position: 'sticky', top: -30, 
+    backgroundColor: '#84a6deff', // 🚨 FIX: Fundal ALB pentru a acoperi marginea negativă
+    padding: '30px 0 15px 0', margin: '0 -30px 0px', 
+    width: 'calc(100% + 60px)', zIndex: 100, 
+    borderBottom: '1px solid #eee',
+};
+
+const sectionHeaderStyle: React.CSSProperties = {
+    borderBottom: '1px solid #c7c7c7', 
+    paddingBottom: '5px', 
+    marginTop: '35px', 
+    marginBottom: '15px',
+    color: ACCENT_DARK_BLUE, 
+    fontSize: '1.25em',
+    fontWeight: '700',
+};
+
+const commentsContainerStyle: React.CSSProperties = {
+    padding: '25px', 
+    backgroundColor: DARK_BLUE_COMMENT_BG, 
+    color: 'white', 
+    borderRadius: '8px',
+    boxShadow: 'inset 0 0 5px rgba(0, 0, 0, 0.1)', 
+    marginTop: '40px',
+    marginBottom: '20px', 
+};
+
+
+// Funcție de ajutor pentru a afișa valoarea sau un N/A
+const formatValue = (value: string | number | undefined, isCurrency = false, isDate = false) => { /* ... */ return String(value); };
+const getStatusTagStyle = (status: string) => { /* ... */ 
+    switch (status) {
+        case 'Finalizat': return { bg: '#a0c4ff', text: '#00287a' }; 
+        case 'În Planificare': return { bg: '#fcf8e3', text: '#8a6d3b' }; 
+        case 'În Desfășurare': return { bg: '#d9b380', text: '#333333' }; 
+        default: return { bg: '#f9f9f9', text: '#666' };
+    }
+};
+
+
+export default function ProjectDetailsModal({ project, onClose }: ModalProps) {
+    // 1. State for managing comments and input
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [newCommentText, setNewCommentText] = useState('');
+    const [loadingComments, setLoadingComments] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    const supabase = useMemo(() => createClient(), []);
+
+    // Fetch current user and project comments when modal opens / project changes
+    useEffect(() => {
+        let mounted = true;
+        async function load() {
+            setLoadingComments(true);
+
+            // get current user (if any)
+            try {
+                const { data: userData } = await supabase.auth.getUser();
+                if (!mounted) return;
+                setUser(userData?.user ?? null);
+            } catch (e) {
+                console.warn('Error fetching user from Supabase', e);
+            }
+
+            // fetch comments for this project
+            try {
+                const { data, error } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .eq('project_id', project.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching comments:', error);
+                } else if (data) {
+                    if (!mounted) return;
+                    // map to local Comment shape (ensure author_name exists)
+                    type DBComment = {
+                        id: number;
+                        project_id: number;
+                        author_id: string;
+                        author_name: string;
+                        content: string;
+                        created_at: string;
+                    };
+                    const mapped: Comment[] = (data as DBComment[]).map((c) => ({
+                        id: c.id,
+                        project_id: c.project_id,
+                        author_id: c.author_id,
+                        author_name: c.author_name,
+                        content: c.content,
+                        created_at: c.created_at,
+                    }));
+                    setComments(mapped);
+                }
+            } catch (e) {
+                console.error('Unexpected error fetching comments', e);
+            }
+
+            setLoadingComments(false);
+        }
+
+        load();
+
+        return () => {
+            mounted = false;
+        };
+    }, [project.id, supabase]);
+
+    const statusStyle = getStatusTagStyle(project.status);
+    const totalValueDisplay = formatValue(formatNumber(project.total_value) + ' lei', true);
+
+    // 2. Handler for adding a new comment
+    const handlePostComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newCommentText.trim() === '') return;
+
+        if (!user) {
+            // Shouldn't happen because UI will disable the form, but guard anyway
+            alert('Trebuie să fii autentificat pentru a posta un comentariu.');
+            return;
+        }
+
+        const payload = {
+            project_id: project.id,
+            author_id: user.id,
+            author_name: (user.user_metadata && user.user_metadata.full_name) || user.email || 'Utilizator',
+            content: newCommentText.trim(),
+        };
+
+        try {
+            const { data, error } = await supabase.from('comments').insert(payload).select().single();
+            if (error) {
+                console.error('Error inserting comment:', error);
+                alert('A apărut o eroare la postarea comentariului.');
+                return;
+            }
+
+            const inserted: Comment = {
+                id: data.id,
+                project_id: data.project_id,
+                author_id: data.author_id ?? null,
+                author_name: data.author_name ?? (data.author_id ?? 'Utilizator'),
+                content: data.content,
+                created_at: data.created_at,
+            };
+
+            setComments(prev => [inserted, ...prev]);
+            setNewCommentText('');
+        } catch (e) {
+            console.error('Unexpected error posting comment', e);
+            alert('A apărut o eroare la postarea comentariului.');
+        }
+    };
+
+    return (
+        <div style={modalBackdropStyle} onClick={onClose}>
+            <div style={modalContentStyle} onClick={e => e.stopPropagation()}> 
+                
+                {/* STICKY HEADER SECTION (Fundal Alb) */}
+                <div style={stickyHeaderStyle}>
+                    <div style={{ paddingLeft: 30 }}> 
+                        <h2 
+                            className={montserrat.className} 
+                            style={{ 
+                                margin: 0, 
+                                // 🛠️ FIX 2: Aplică culoarea accentului pentru titlu (Navy)
+                                color: ACCENT_DARK_BLUE, 
+                                fontSize: '1.9em', 
+                                fontWeight: '900' 
+                            }}
+                        >
+                            {project.title ?? project.name}
+                        </h2> 
+                        <span 
+                            style={{ 
+                                backgroundColor: statusStyle.bg, color: statusStyle.text, padding: '5px 10px', 
+                                borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9em', display: 'inline-block', marginTop: '10px'
+                            }}
+                        >
+                            Stare: {project.status}
+                        </span>
+                    </div>
+
+                    <button onClick={onClose} style={{ 
+                        border: 'none', background: 'none', fontSize: '1.8em', cursor: 'pointer', color: '#555',
+                        padding: '30px 30px 0 0', 
+                        position: 'absolute', top: 0, right: 0
+                    }}>
+                        &times;
+                    </button>
+                </div>
+                
+                {/* --- Detalii Proiect (Conținut Principal) --- */}
+                <div style={{ padding: '0 30px' }}> 
+                    
+                    {/* Secțiunea 1: Detalii Generale */}
+                    <h3 style={sectionHeaderStyle}>Detalii Generale</h3>
+                    
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Titlu:</strong> {project.title ?? project.name}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Proiectant:</strong> {formatValue(project.designer ? project.designer : 'N/A')}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Locație:</strong> {formatValue(project.location)}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Beneficiar:</strong> {formatValue(project.beneficiary ? project.beneficiary : 'N/A')}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Categorie:</strong> {formatValue(project.category ? project.category : 'N/A')}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Descriere Completă:</strong> {project.description ? project.description : 'N/A'}
+                    </p>
+                    
+                    {/* Secțiunea 2: Valori și Durate */}
+                    <h3 style={sectionHeaderStyle}>Financiar & Termene</h3>
+                    
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Valoare Totală:</strong> {totalValueDisplay}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Durată Realizare:</strong> {formatValue(project.realization_duration_months ? project.realization_duration_months + ' luni' : '-')}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Durată Execuție:</strong> {formatValue(project.execution_duration_months ? project.execution_duration_months + ' luni' : '-')}
+                    </p>
+                    
+
+                    {/* Secțiunea 3: Documentație și Log */}
+                    <h3 style={sectionHeaderStyle}>Documentație și Log</h3>
+
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Ultima Modificare:</strong> {formatValue(project.latest_change ? project.latest_change : 'N/A')}
+                    </p>
+                    
+                    {project.latest_decision_url && (
+                        <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                            <strong style={{color: NEUTRAL_LABEL_COLOR}}>Link Decizie:</strong> <a href={project.latest_decision_url} target="_blank" rel="noopener noreferrer" style={{ color: ACCENT_ACTION_BLUE, fontWeight: 'bold' }}>
+                                Vezi documentul oficial 🔗
+                            </a>
+                        </p>
+                    )}
+                    
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Creat la:</strong> {formatDate(project.created_at)}
+                    </p>
+                    <p style={{marginBottom: 10, color: NEUTRAL_FONT_COLOR, fontSize: '1em'}}>
+                        <strong style={{color: NEUTRAL_LABEL_COLOR}}>Actualizat la:</strong> {formatDate(project.updated_at)}
+                    </p>                    
+                    
+                    {/* 💥 SECȚIUNEA DE COMENTARII ÎNCADRATĂ (Albastru Închis - Navy) 💥 */}
+                    <div style={commentsContainerStyle}>
+                        <h3 style={{ borderBottom: '1px solid #3d699aff', paddingBottom: '5px', margin: '0 0 20px 0', color: 'white' }}>
+                            Comentarii ({comments.length})
+                        </h3>
+
+                        {/* Formular Postare Comentariu */}
+                        <form onSubmit={handlePostComment} style={{ marginBottom: '20px', borderBottom: '1px dashed #5a80aaff', paddingBottom: '15px' }}>
+                            <textarea
+                                style={{ ...inputStyle, minHeight: '60px', backgroundColor: 'white', color: NEUTRAL_FONT_COLOR }}
+                                placeholder="Adaugă un comentariu public..."
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                required
+                            />
+                            <button 
+                                type="submit" 
+                                style={{ 
+                                    padding: '8px 15px', backgroundColor: ACCENT_ACTION_BLUE, color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.9em', float: 'right'
+                                }}
+                            >
+                                Postează Comentariul
+                            </button>
+                            <div style={{ clear: 'both' }}></div>
+                        </form>
+
+                        {/* Listă Comentarii */}
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {comments.map(comment => (
+                                <div key={comment.id} style={{ borderBottom: '1px dotted #88aadd', padding: '15px 0' }}>
+                                    <p style={{ margin: '0 0 5px 0' }}>
+                                        <strong style={{ color: '#c0d6ff' }}>{comment.author_name}</strong> 
+                                        <span style={{ fontSize: '0.8em', color: '#c0d6ff', marginLeft: '10px' }}>
+                                            — {formatDate(comment.created_at)}
+                                        </span>
+                                    </p>
+                                    <p style={{ margin: 0, color: '#f0f4ff' }}>{comment.content}</p>
+                                </div>
+                            ))}
+                            {comments.length === 0 && <p style={{ color: '#c0d6ff' }}>Fii primul care comentează acest proiect!</p>}
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+    );
+}
