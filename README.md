@@ -4,7 +4,7 @@
 
 This project was developed for **UniHack**, specifically for the **Public Service Community** track.
 
-## 🎯 Purpose
+## Purpose
 
 The main goal of TIMformation is to **centralize** information regarding public administrative projects. It provides a transparent and accessible way for locals to view:
 - 🟢 **Finished Projects**
@@ -13,7 +13,7 @@ The main goal of TIMformation is to **centralize** information regarding public 
 
 By visualizing these projects on an interactive map, citizens can easily see what work is being done in their neighborhoods and across the city.
 
-## 🚀 Features
+## Features
 
 ### For Regular Users (Locals)
 - **Interactive Map**: Explore Timișoara with marked locations of various administrative projects.
@@ -25,7 +25,7 @@ By visualizing these projects on an interactive map, citizens can easily see wha
 - **Project Management**: Centralized dashboard to add new projects, update existing ones, or change their status.
 - **Authentication**: Secure login system for authorized personnel to manage the data.
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 The application is built using modern web development technologies to ensure speed, scalability, and a great user experience:
 
@@ -35,7 +35,7 @@ The application is built using modern web development technologies to ensure spe
 - **Database & Backend**: [Supabase](https://supabase.com/) (PostgreSQL) for real-time data and authentication
 - **Deployment**: [Vercel](https://vercel.com/) for fast and reliable hosting
 
-## 📦 Getting Started
+## Getting Started
 
 If you want to run this project locally, follow these steps:
 
@@ -68,9 +68,9 @@ If you want to run this project locally, follow these steps:
 
 5.  Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 🌐 Deployment
+## Deployment
 
 This application is deployed on **Vercel**, making it globally accessible and ensuring continuous deployment with every update.
 
 ---
-*Built with ❤️ for Timișoara at UniHack.*
+
