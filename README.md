@@ -1,4 +1,4 @@
-# TIMformation 🏗️🇷🇴
+# TIMformation 
 
 **TIMformation** is a centralized platform designed to help the local community of **Timișoara** stay informed about administrative projects in their city. 
 
